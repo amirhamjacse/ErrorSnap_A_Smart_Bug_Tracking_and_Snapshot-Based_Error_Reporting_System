@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "target": "ES6",
+    "module": "ESNext",
+    "jsx": "preserve",
+    "baseUrl": "./src",
+    "skipLibCheck": true,
+    "lib": ["ES2015", "DOM"],
+    "paths": {
+      "utils/*": ["utils/*"],
+      "components/*": ["components/*"],
+      "core_components/*": ["core_components/*"],
+      "icons/*": ["icons/*"],
+      "hooks/*": ["hooks/*"],
+      "store/*": ["store/*"],
+      "layouts/*": ["layouts/*"],
+      "routes/*": ["routes/*"],
+      "test_utils/*": ["test_utils/*"],
+      "theme/*": ["theme/*"],
+      "pages/*": ["pages/*"],
+      "types/*": ["types/*"]
+    },
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  }
+}

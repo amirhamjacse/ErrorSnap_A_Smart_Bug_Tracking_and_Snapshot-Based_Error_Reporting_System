@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "declaration": true, // Generate declaration files
+    "outDir": "./dist", // Output directory for compiled code
+    "target": "ES5", // Target older JS version if needed
+    "module": "ES6", // Module system to use
+    "moduleResolution": "node", // Resolves modules using Node's resolution
+    "esModuleInterop": true // Allows compatibility with commonjs modules
+    // other options...
+  },
+  "include": ["src/**/*.ts"] // Adjust this based on your source folder
+}

@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+:root {
+  --primary: #6c8cff;
+  --secondary: #7c5cff;
+  --background: #08101f;
+  --backgroundShade: #0f1728;
+  --paper: rgba(13, 20, 34, 0.88);
+  --textPrimary: #eef2ff;
+  --textSecondary: #b8c4e0;
+  --white: #ffffff;
+  --divider: rgba(148, 163, 184, 0.18);
+  --error: #ff8a76;
+  --red: #c2415d;
+  --hover: rgba(255, 255, 255, 0.06);
+  --font-family-body: "Plus Jakarta Sans", sans-serif;
+  --font-family-display: "Space Grotesk", sans-serif;
+}
+
+body {
+  color: var(--textPrimary);
+  font-family: var(--font-family-body);
+  background:
+    radial-gradient(circle at top left, rgba(108, 140, 255, 0.18), transparent 35%),
+    radial-gradient(circle at top right, rgba(124, 92, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #08101f 0%, #0a1324 48%, #060b16 100%);
+  background-attachment: fixed;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+::selection {
+  background: rgba(108, 140, 255, 0.3);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.85);
+}

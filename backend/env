@@ -1,0 +1,4 @@
+DB_HOST=localhost
+DB_USER=hamja
+DB_PASS=strongpassword
+DB_NAME=error_snap

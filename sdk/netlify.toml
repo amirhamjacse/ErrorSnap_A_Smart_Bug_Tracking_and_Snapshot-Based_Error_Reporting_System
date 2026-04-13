@@ -1,0 +1,9 @@
+[build]
+  publish = "dist"
+  command = "npm run prod"
+
+[[redirects]]
+  from = "/"
+  to = "/errorSnap.js"
+  status = 200
+  force = true
