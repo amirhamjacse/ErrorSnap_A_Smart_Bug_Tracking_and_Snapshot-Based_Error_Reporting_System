@@ -51,7 +51,9 @@ export const CustomDialog = ({
       }}
       {...rest}
     >
-      <DialogTitle sx={{ pb: 2, borderBottom: `1px solid ${cssColor("divider")}` }}>
+      <DialogTitle
+        sx={{ pb: 2, borderBottom: `1px solid ${cssColor("divider")}` }}
+      >
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="h6" component="span">
             {title}
@@ -61,8 +63,8 @@ export const CustomDialog = ({
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ py: 3.25 }}>{children}</DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogContent sx={{ pt: "16px !important" }}>{children}</DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button
           disabled={disabled}
           onClick={onClose}

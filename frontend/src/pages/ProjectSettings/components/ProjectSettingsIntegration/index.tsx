@@ -1,10 +1,11 @@
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Grid2, Typography } from "@mui/material";
 import useSlackDetails from "hooks/useSlackDetails";
 import React from "react";
 import { useParams } from "react-router-dom";
 import ProjectSettingsSlackIntegrationAdd from "./components/ProjectSettingsSlackIntegrationAdd";
 import ProjectSettingsSlackIntegrationDetails from "./components/ProjectSettingsSlackIntegrationDetails";
 import { cssColor } from "utils/colors";
+import UsageGuide from "pages/Projects/components/UsageGuide";
 
 export default function ProjectSettingsIntegration() {
   const { projectId } = useParams();
@@ -28,9 +29,20 @@ export default function ProjectSettingsIntegration() {
     );
   }
 
-  return data ? (
-    <ProjectSettingsSlackIntegrationDetails data={data} />
-  ) : (
-    <ProjectSettingsSlackIntegrationAdd />
+  return (
+    <>
+      <Grid2 container spacing={2}>
+        <Grid2 size={12}>
+          <UsageGuide />
+        </Grid2>
+        <Grid2 size={12}>
+          {data ? (
+            <ProjectSettingsSlackIntegrationDetails data={data} />
+          ) : (
+            <ProjectSettingsSlackIntegrationAdd />
+          )}
+        </Grid2>
+      </Grid2>
+    </>
   );
 }

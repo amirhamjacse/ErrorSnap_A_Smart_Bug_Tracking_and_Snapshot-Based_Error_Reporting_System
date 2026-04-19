@@ -8,7 +8,7 @@ import Loader from "components/Loader";
 import { cssColor } from "utils/colors";
 import BugIcon from "icons/BugIcon";
 import BackIcon from "icons/BackIcon";
-import ProjectIntegrationInfo from "components/ProjectIntegrationInfo";
+import UsageGuide from "pages/Projects/components/UsageGuide";
 
 export default function ProjectErrorDetails() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export default function ProjectErrorDetails() {
 
   const { data, isLoading, isFetching, refetch, error } = useError(
     errorId,
-    true
+    true,
   );
 
   const handleUpdate = async () => {
@@ -53,7 +53,7 @@ export default function ProjectErrorDetails() {
             </Button>
           </Grid>
           <Grid size={12}>
-            <ProjectIntegrationInfo />
+            <UsageGuide />
           </Grid>
           <Grid size={12}>
             <Box

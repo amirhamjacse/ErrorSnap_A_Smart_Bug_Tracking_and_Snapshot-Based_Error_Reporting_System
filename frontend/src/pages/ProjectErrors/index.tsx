@@ -1,16 +1,16 @@
 import { Button, Grid2 as Grid } from "@mui/material";
 import ErrorTable from "./components/ErrorTable";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import PageContainer from "components/PageContainer";
 import ErrorFilters from "./components/ErrorFilters";
 import ListContainer from "components/ListContainer";
 import ProjectErrorsHeader from "./components/ProjectErrorsHeader";
 import useProject from "hooks/useProject";
 import BackIcon from "icons/BackIcon";
-import ProjectIntegrationInfo from "components/ProjectIntegrationInfo";
+import useProjectId from "hooks/useProjectId";
 
 export default function ProjectErrors() {
-  const { projectId } = useParams();
+  const projectId = useProjectId();
   const navigate = useNavigate();
   const {
     data: project,
@@ -38,9 +38,6 @@ export default function ProjectErrors() {
               >
                 Go back
               </Button>
-            </Grid>
-            <Grid size={12}>
-              <ProjectIntegrationInfo />
             </Grid>
             <Grid size={12}>
               <ProjectErrorsHeader projectName={project?.name} />

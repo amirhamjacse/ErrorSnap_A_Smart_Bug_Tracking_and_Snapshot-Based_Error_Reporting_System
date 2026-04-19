@@ -1,14 +1,15 @@
 import { Box, Paper, Typography } from "@mui/material";
 import Copy from "components/Copy";
+import useProjectId from "hooks/useProjectId";
 import { useRef } from "react";
 import { cssColor } from "utils/colors";
 
-const SDK_POSTBUILD_SCRIPT = `"scripts": {
-  "postbuild": "errorsnap-upload -p <project_id> -d <dist_folder>"
-}`;
-
 export default function UsageGuide() {
+  const projectId = useProjectId();
   const scriptRef = useRef<HTMLPreElement | null>(null);
+  const sourceMapRef = useRef<HTMLPreElement | null>(null);
+  const scriptSnippet = `<script>\n  window.addEventListener('load', () => {\n    const script = document.createElement('script');\n    script.src = "https://errorsnap-sdk.netlify.app/";\n    script.onload = () => {\n      const app = new ErrorSnap({\n        projectId: "${projectId}",\n      });\n      app.initialize();\n    };\n    document.body.appendChild(script);\n  });\n</script>`;
+  const sourceMapSnippet = `"scripts": {\n  "postbuild": "errorsnap-upload -p ${projectId} -d <dist folder>"\n}`;
 
   return (
     <Paper
@@ -24,18 +25,14 @@ export default function UsageGuide() {
         ErrorSnap Usage Guide
       </Typography>
 
-      <Box component="ol" sx={{ pl: 2.5, m: 0, display: "grid", gap: 1.5 }}>
-        <Box component="li">
-          <Typography>
-            Click your created project and copy your project ID. Edit the
-            script below, paste in your project_id, then copy the full code.
-          </Typography>
-        </Box>
-      </Box>
-
-      <Copy targetRef={scriptRef} sx={{ mt: 2.5, alignItems: "center" }}>
+      <Copy
+        targetRef={scriptRef}
+        copyText={scriptSnippet}
+        sx={{ mt: 2.5, alignItems: "center" }}
+      >
         <Typography color="text.secondary">
-          Add this script to your package.json:
+          Add this script to your website to start capturing errors and
+          snapshots.
         </Typography>
       </Copy>
 
@@ -56,7 +53,37 @@ export default function UsageGuide() {
           lineHeight: 1.55,
         }}
       >
-        {SDK_POSTBUILD_SCRIPT}
+        {scriptSnippet}
+      </Box>
+
+      <Copy
+        targetRef={sourceMapRef}
+        copyText={sourceMapSnippet}
+        sx={{ mt: 2.5, alignItems: "center" }}
+      >
+        <Typography color="text.secondary">
+          For source map support add this script to your build process.
+        </Typography>
+      </Copy>
+
+      <Box
+        ref={sourceMapRef}
+        component="pre"
+        sx={{
+          mt: 1,
+          m: 0,
+          p: 2,
+          borderRadius: "10px",
+          overflowX: "auto",
+          color: cssColor("white"),
+          border: `1px solid ${cssColor("divider")}`,
+          backgroundColor: "rgba(15, 23, 42, 0.68)",
+          fontFamily: '"Fira Code", "JetBrains Mono", monospace',
+          fontSize: "0.85rem",
+          lineHeight: 1.55,
+        }}
+      >
+        {sourceMapSnippet}
       </Box>
     </Paper>
   );

@@ -164,10 +164,8 @@ const theme: ThemeOptions = {
       },
       styleOverrides: {
         root: {
-          marginTop: "6px",
-          marginBottom: "6px",
           "& .MuiOutlinedInput-root": {
-            borderRadius: "10px",
+            borderRadius: "8px",
             backgroundColor: alpha("#0f172a", 0.72),
             backdropFilter: "blur(14px)",
             transition: "border-color 160ms ease, box-shadow 160ms ease",
@@ -249,8 +247,7 @@ const theme: ThemeOptions = {
           },
         },
         contained: {
-          backgroundImage:
-            "linear-gradient(135deg, #6c8cff 0%, #7c5cff 100%)",
+          backgroundImage: "linear-gradient(135deg, #6c8cff 0%, #7c5cff 100%)",
           color: "#fff",
           boxShadow: "0 18px 40px rgba(108, 140, 255, 0.22)",
           "&:hover": {
@@ -293,8 +290,7 @@ const theme: ThemeOptions = {
         indicator: {
           height: 3,
           borderRadius: 999,
-          backgroundImage:
-            "linear-gradient(135deg, #6c8cff 0%, #7c5cff 100%)",
+          backgroundImage: "linear-gradient(135deg, #6c8cff 0%, #7c5cff 100%)",
         },
       },
     },
@@ -362,8 +358,7 @@ const theme: ThemeOptions = {
     MuiAvatar: {
       styleOverrides: {
         root: {
-          backgroundImage:
-            "linear-gradient(135deg, #6c8cff 0%, #7c5cff 100%)",
+          backgroundImage: "linear-gradient(135deg, #6c8cff 0%, #7c5cff 100%)",
           color: "#ffffff",
           fontWeight: 800,
         },

@@ -17,6 +17,7 @@ export interface CopyProps {
   children: ReactNode;
   fontSize?: number;
   targetRef?: MutableRefObject<unknown>;
+  copyText?: string;
   onAfterCopy?: zeroArgsFunction;
   sx?: SxProps<Theme>;
 }
@@ -25,17 +26,28 @@ const Copy = ({
   children = null,
   fontSize = 18,
   targetRef = null,
+  copyText,
   onAfterCopy,
   sx,
 }: CopyProps) => {
   const elementRef = useRef(null);
-  const handleCopyToClipboard = () => {
-    fieldToClipboard.copyfield(
-      null,
-      targetRef?.current || elementRef?.current,
-      () => {}
+  const handleCopyToClipboard = async () => {
+    const fallbackNode = targetRef?.current || elementRef?.current;
+
+    if (typeof copyText === "string") {
+      try {
+        await navigator.clipboard.writeText(copyText);
+      } catch {
+        // Fallback for unsupported clipboard API contexts.
+        fieldToClipboard.copyfield(null, fallbackNode, () => {});
+      }
+    } else {
+      fieldToClipboard.copyfield(null, fallbackNode, () => {});
+    }
+
+    toast.success(
+      <Typography sx={{ color: "#000" }}>Copied to clipboard</Typography>,
     );
-    toast.success(<Typography sx={{ color: "#000" }}>Copied to clipboard</Typography>);
     if (onAfterCopy) {
       onAfterCopy();
     }

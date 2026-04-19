@@ -5,7 +5,6 @@ import AddProject from "./components/AddProject";
 import ProjectList from "./components/ProjectList";
 import PageContainer from "components/PageContainer";
 import FilterProject from "./components/FilterProject";
-import UsageGuide from "./components/UsageGuide";
 
 export default function Projects() {
   const [openAddProjectPopup, setOpenAddProjectPopup] = useState(false);
@@ -18,9 +17,6 @@ export default function Projects() {
     <>
       <PageContainer>
         <Grid container rowSpacing={3}>
-          <Grid size={12}>
-            <UsageGuide />
-          </Grid>
           <Grid size={12}>
             <Box
               display="flex"
