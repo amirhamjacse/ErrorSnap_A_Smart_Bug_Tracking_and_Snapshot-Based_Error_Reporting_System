@@ -142,7 +142,9 @@ export const getProjectErrors = async (req, res) => {
 
   try {
     const results = await Errorlog.selectByProjectId(projectId, req.query);
-    res.status(200).json({ message: "", data: results });
+    res
+      .status(200)
+      .json({ message: "", data: results.rows, pagination: results.pagination });
   } catch (error) {
     console.error("Error getting error logs:", error);
     res.status(500).json({ message: "Error getting error logs" });

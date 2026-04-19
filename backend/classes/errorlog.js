@@ -85,32 +85,54 @@ export default class Errorlog {
   }
 
   static selectByProjectId(projectId, filters = {}) {
-    const { orderBy = "DESC", query, status } = filters;
-    let sql = `SELECT * FROM ${Errorlog.table} WHERE project_id = ?`;
-    let params = [projectId];
+    const { orderBy = "DESC", query, status, page = 1, limit = 10 } = filters;
+    let whereSql = `WHERE project_id = ?`;
+    const whereParams = [projectId];
 
     if (query) {
-      sql += ` AND (message LIKE ? OR id = ?)`;
-      params.push(`%${query}%`, `${query}`);
+      whereSql += ` AND (message LIKE ? OR id = ?)`;
+      whereParams.push(`%${query}%`, `${query}`);
     }
 
-    if (status) {
-      sql += ` AND status = ?`;
-      params.push(Number(status));
+    if (typeof status !== "undefined" && status !== "") {
+      whereSql += ` AND status = ?`;
+      whereParams.push(Number(status));
     }
 
-    if (orderBy) {
-      sql += ` ORDER BY created_at ${orderBy}`;
-    }
+    const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+    const pageSize = Math.max(parseInt(limit, 10) || 10, 1);
+    const offset = (pageNumber - 1) * pageSize;
+    const sortOrder = String(orderBy).toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    const countSql = `SELECT COUNT(*) AS total FROM ${Errorlog.table} ${whereSql}`;
+    const sql = `SELECT * FROM ${Errorlog.table} ${whereSql} ORDER BY created_at ${sortOrder} LIMIT ? OFFSET ?`;
+    const params = [...whereParams, pageSize, offset];
 
     return new Promise((resolve, reject) => {
-      con.query(sql, params, (err, results) => {
-        if (err) {
-          console.error("Error executing query:", err);
-          return reject(err);
+      con.query(countSql, whereParams, (countErr, countResults) => {
+        if (countErr) {
+          console.error("Error executing query:", countErr);
+          return reject(countErr);
         }
 
-        resolve(results);
+        const total = countResults?.[0]?.total || 0;
+
+        con.query(sql, params, (err, results) => {
+          if (err) {
+            console.error("Error executing query:", err);
+            return reject(err);
+          }
+
+          resolve({
+            rows: results,
+            pagination: {
+              total,
+              page: pageNumber,
+              limit: pageSize,
+              totalPages: Math.ceil(total / pageSize),
+            },
+          });
+        });
       });
     });
   }

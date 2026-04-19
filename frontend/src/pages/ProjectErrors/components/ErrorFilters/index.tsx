@@ -12,11 +12,13 @@ import { cssColor } from "utils/colors";
 
 export default function ErrorFilters() {
   const { value, handleChange } = useFilterChange("status", 0);
+  const { handleChange: handlePageChange } = useFilterChange("page", 1);
   const { value: queryValue, handleChange: handleChangeQuery } =
-    useFilterChangeInput("query", "");
+    useFilterChangeInput("query", "", 300, () => handlePageChange(1));
 
   const handleChangeStatus = (e) => {
     handleChange(e.target.value);
+    handlePageChange(1);
   };
 
   return (

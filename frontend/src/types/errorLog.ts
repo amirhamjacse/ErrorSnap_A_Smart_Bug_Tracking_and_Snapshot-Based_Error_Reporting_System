@@ -14,6 +14,18 @@ export type errorLog = {
   image: string;
 };
 
+export type errorLogPagination = {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export type paginatedErrorLogs = {
+  data: errorLog[];
+  pagination: errorLogPagination;
+};
+
 export enum errorLogStatus {
   UNRESOLVED = 0,
   PENDING = 1,

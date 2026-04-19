@@ -4,7 +4,8 @@ import useFilterChange from "./useFilterChange"; // Assuming this is your existi
 const useFilterChangeInput = (
   name: string,
   defaultValue: string | number,
-  delay = 300
+  delay = 300,
+  onAfterDebouncedChange?: (value: string | number) => void
 ) => {
   const { value: queryValue, handleChange } = useFilterChange(
     name,
@@ -27,13 +28,22 @@ const useFilterChangeInput = (
     const handler = setTimeout(() => {
       if (debouncedValue !== queryValue) {
         handleChange(debouncedValue);
+        if (onAfterDebouncedChange) {
+          onAfterDebouncedChange(debouncedValue);
+        }
       }
     }, delay);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [debouncedValue, queryValue, handleChange, delay]);
+  }, [
+    debouncedValue,
+    queryValue,
+    handleChange,
+    delay,
+    onAfterDebouncedChange,
+  ]);
 
   return {
     value: debouncedValue,

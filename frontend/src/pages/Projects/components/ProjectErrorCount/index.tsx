@@ -27,9 +27,9 @@ export default function ProjectErrorCount({
   ) : (
     <Chip
       icon={<AlertIcon fontSize={16} />}
-      label={`${errorLogs?.length} errors`}
+      label={`${errorLogs?.pagination?.total || 0} errors`}
       size="small"
-      color={errorLogs?.length > 0 ? "error" : "primary"}
+      color={(errorLogs?.pagination?.total || 0) > 0 ? "error" : "primary"}
     />
   );
 }

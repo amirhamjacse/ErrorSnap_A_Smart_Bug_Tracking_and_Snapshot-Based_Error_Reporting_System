@@ -1,5 +1,7 @@
 import {
   Box,
+  MenuItem,
+  Pagination,
   Paper,
   Table,
   TableBody,
@@ -7,22 +9,32 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from "@mui/material";
 import { cssColor } from "utils/colors";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import ListContainer from "components/ListContainer";
 import { errorStatus } from "types/logs";
 import { getTimeAgo } from "utils/time";
 import { getBrowserIcon } from "utils/icon";
 import useErrors from "hooks/useErrors";
 import useFilterChange from "hooks/useFilterChange";
+import useProjectId from "hooks/useProjectId";
 
 export default function ErrorTable() {
   const { value: status } = useFilterChange("status", 0);
   const { value: query } = useFilterChange("query", "");
+  const { value: page, handleChange: handlePageChange } = useFilterChange(
+    "page",
+    1,
+  );
+  const { value: limit, handleChange: handleLimitChange } = useFilterChange(
+    "limit",
+    10,
+  );
   const location = useLocation();
-  const { projectId } = useParams();
+  const projectId = useProjectId();
 
   const {
     data: errorLogs,
@@ -32,13 +44,28 @@ export default function ErrorTable() {
     projectId,
     query,
     status,
+    page,
+    limit,
   });
+
+  const currentPage = Number(page) > 0 ? Number(page) : 1;
+  const rowsPerPage = Number(limit) > 0 ? Number(limit) : 10;
+  const totalPages = Math.max(errorLogs?.pagination?.totalPages || 1, 1);
+
+  const onPageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    handlePageChange(value);
+  };
+
+  const onLimitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextLimit = Number(event.target.value);
+    handleLimitChange({ limit: nextLimit, page: 1 });
+  };
 
   return (
     <ListContainer
       loading={isLoading}
       error={error?.message}
-      count={errorLogs?.length}
+      count={errorLogs?.data?.length}
     >
       <TableContainer
         component={Paper}
@@ -60,7 +87,7 @@ export default function ErrorTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {errorLogs?.map((error) => (
+            {errorLogs?.data?.map((error) => (
               <TableRow
                 sx={{
                   "&:nth-of-type(odd)": {
@@ -92,6 +119,53 @@ export default function ErrorTable() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Box
+        mt={2}
+        px={0.5}
+        display="flex"
+        flexWrap="wrap"
+        gap={2}
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Typography color="text.secondary" variant="body2">
+          Showing {errorLogs?.data?.length || 0} of{" "}
+          {errorLogs?.pagination?.total || 0} errors
+        </Typography>
+
+        <Box display="flex" alignItems="center" gap={2}>
+          <TextField
+            select
+            size="small"
+            label="Rows"
+            value={String(rowsPerPage)}
+            onChange={onLimitChange}
+            sx={{ minWidth: 100 }}
+          >
+            {[10, 20, 50].map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <Pagination
+            page={Math.min(currentPage, totalPages)}
+            count={totalPages}
+            onChange={onPageChange}
+            shape="rounded"
+            color="primary"
+            siblingCount={1}
+            boundaryCount={1}
+            sx={{
+              "& .MuiPaginationItem-root": {
+                fontWeight: 600,
+              },
+            }}
+          />
+        </Box>
+      </Box>
     </ListContainer>
   );
 }

@@ -8,7 +8,6 @@ import Loader from "components/Loader";
 import { cssColor } from "utils/colors";
 import BugIcon from "icons/BugIcon";
 import BackIcon from "icons/BackIcon";
-import UsageGuide from "pages/Projects/components/UsageGuide";
 
 export default function ProjectErrorDetails() {
   const navigate = useNavigate();
@@ -51,9 +50,6 @@ export default function ProjectErrorDetails() {
             >
               Go back
             </Button>
-          </Grid>
-          <Grid size={12}>
-            <UsageGuide />
           </Grid>
           <Grid size={12}>
             <Box
