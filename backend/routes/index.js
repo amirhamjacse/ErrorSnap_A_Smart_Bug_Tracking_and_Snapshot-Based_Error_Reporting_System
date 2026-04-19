@@ -7,6 +7,7 @@ import {
 } from "../controllers/auth.js";
 import {
   sendProjectError,
+  exportProjectErrorsCsv,
   getProjectErrors,
   getError,
   assignUserToError,
@@ -48,6 +49,7 @@ router.post("/auth/register", register);
 router.get("/auth/invitation/:token", getInvitationData);
 
 router.post("/error-logs", sendProjectError);
+router.get("/error-logs/:projectId/export", exportProjectErrorsCsv);
 router.post("/assign-error", assignUserToError);
 router.post("/resolve-error", resolveError);
 router.get("/error-logs/:projectId", getProjectErrors);

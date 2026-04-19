@@ -6,6 +6,27 @@ import { v2 as cloudinary } from "cloudinary";
 export default class Errorlog {
   static table = "errorlogs";
 
+  static getFilterQuery(projectId, filters = {}) {
+    const { query, status } = filters;
+    let whereSql = `WHERE project_id = ?`;
+    const whereParams = [projectId];
+
+    if (query) {
+      whereSql += ` AND (message LIKE ? OR id = ?)`;
+      whereParams.push(`%${query}%`, `${query}`);
+    }
+
+    if (typeof status !== "undefined" && status !== "") {
+      whereSql += ` AND status = ?`;
+      whereParams.push(Number(status));
+    }
+
+    return {
+      whereSql,
+      whereParams,
+    };
+  }
+
   static insert(values) {
     const columns = Object.keys(values).join(", ");
     const placeholders = Object.keys(values)
@@ -86,18 +107,10 @@ export default class Errorlog {
 
   static selectByProjectId(projectId, filters = {}) {
     const { orderBy = "DESC", query, status, page = 1, limit = 10 } = filters;
-    let whereSql = `WHERE project_id = ?`;
-    const whereParams = [projectId];
-
-    if (query) {
-      whereSql += ` AND (message LIKE ? OR id = ?)`;
-      whereParams.push(`%${query}%`, `${query}`);
-    }
-
-    if (typeof status !== "undefined" && status !== "") {
-      whereSql += ` AND status = ?`;
-      whereParams.push(Number(status));
-    }
+    const { whereSql, whereParams } = Errorlog.getFilterQuery(projectId, {
+      query,
+      status,
+    });
 
     const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
     const pageSize = Math.max(parseInt(limit, 10) || 10, 1);
@@ -133,6 +146,40 @@ export default class Errorlog {
             },
           });
         });
+      });
+    });
+  }
+
+  static selectByProjectIdForExport(projectId, filters = {}) {
+    const { orderBy = "DESC", query, status, page, limit } = filters;
+    const { whereSql, whereParams } = Errorlog.getFilterQuery(projectId, {
+      query,
+      status,
+    });
+    const sortOrder = String(orderBy).toUpperCase() === "ASC" ? "ASC" : "DESC";
+    const hasPagination =
+      typeof page !== "undefined" &&
+      page !== "" &&
+      typeof limit !== "undefined" &&
+      limit !== "";
+    const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+    const pageSize = Math.max(parseInt(limit, 10) || 10, 1);
+    const offset = (pageNumber - 1) * pageSize;
+    const sql = hasPagination
+      ? `SELECT * FROM ${Errorlog.table} ${whereSql} ORDER BY created_at ${sortOrder} LIMIT ? OFFSET ?`
+      : `SELECT * FROM ${Errorlog.table} ${whereSql} ORDER BY created_at ${sortOrder}`;
+    const params = hasPagination
+      ? [...whereParams, pageSize, offset]
+      : whereParams;
+
+    return new Promise((resolve, reject) => {
+      con.query(sql, params, (err, results) => {
+        if (err) {
+          console.error("Error executing query:", err);
+          return reject(err);
+        }
+
+        resolve(results);
       });
     });
   }
