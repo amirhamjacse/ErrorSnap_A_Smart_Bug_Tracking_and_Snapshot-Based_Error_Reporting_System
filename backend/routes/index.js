@@ -1,5 +1,10 @@
 import express from "express";
-import { getLoggedInUser, login, register } from "../controllers/auth.js";
+import {
+  getInvitationData,
+  getLoggedInUser,
+  login,
+  register,
+} from "../controllers/auth.js";
 import {
   sendProjectError,
   getProjectErrors,
@@ -40,6 +45,7 @@ const router = express.Router();
 router.post("/auth/login", login);
 router.get("/auth/get-loggedIn-user", getLoggedInUser);
 router.post("/auth/register", register);
+router.get("/auth/invitation/:token", getInvitationData);
 
 router.post("/error-logs", sendProjectError);
 router.post("/assign-error", assignUserToError);

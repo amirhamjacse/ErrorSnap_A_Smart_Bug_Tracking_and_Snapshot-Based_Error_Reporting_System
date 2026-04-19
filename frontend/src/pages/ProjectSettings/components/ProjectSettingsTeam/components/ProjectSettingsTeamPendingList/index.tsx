@@ -22,7 +22,7 @@ export default function ProjectSettingsTeamPendingList() {
     retry: false,
   });
   const { mutateAsync } = useMutation({
-    mutationFn: async (memberId: number) => {
+    mutationFn: async (memberId: number | string) => {
       return await apiClient.post(`/cancel-invitation/${memberId}`);
     },
   });

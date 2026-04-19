@@ -10,6 +10,7 @@ import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import AuthFormWrapper from "components/AuthFormWrapper";
 import useHookForm from "hooks/useHookForm";
+import { useEffect } from "react";
 import { Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
@@ -17,7 +18,16 @@ import { setUser } from "store/features/auth";
 import { apiClient } from "utils/axios";
 import Cookies from "js-cookie";
 import { z } from "zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+
+type InvitationData = {
+  email: string;
+  projectId: string;
+  projectName: string;
+  invitedByUsername: string;
+  expiresAt: string;
+};
 
 const schema = z
   .object({
@@ -41,17 +51,35 @@ const schema = z
   });
 
 export default function Register() {
+  const [searchParams] = useSearchParams();
+  const invitationToken = searchParams.get("invitationToken") || "";
+  const invitationEmailParam = searchParams.get("email") || "";
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { mutate, isPending } = useMutation({
-    mutationFn: async (projectData: z.infer<typeof schema>) => {
+    mutationFn: async (
+      projectData: z.infer<typeof schema> & { invitationToken?: string },
+    ) => {
       return await apiClient.post("/auth/register", projectData);
     },
+  });
+
+  const invitationQuery = useQuery({
+    queryKey: ["invitation-token", invitationToken],
+    queryFn: async (): Promise<InvitationData> => {
+      const response = await apiClient.get(
+        `/auth/invitation/${invitationToken}`,
+      );
+      return response.data?.data;
+    },
+    enabled: !!invitationToken,
+    retry: false,
   });
 
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
     reset,
   } = useHookForm({
@@ -63,21 +91,48 @@ export default function Register() {
       confirm_password: "",
     },
     onSubmit: async (data) => {
-      mutate(data, {
-        onSuccess: ({ data }) => {
-          reset();
-          dispatch(setUser(data?.data));
-          navigate("/projects");
-          Cookies.set("token", data?.data?.token, { expires: 1 });
+      mutate(
+        {
+          ...data,
+          ...(invitationToken ? { invitationToken } : {}),
         },
-        onError: (error: AxiosError<{ message: string }>) => {
-          const errorMessage = error?.response?.data?.message;
-          console.error("Error adding project:", errorMessage);
-          toast.error(errorMessage);
+        {
+          onSuccess: ({ data }) => {
+            reset();
+            dispatch(setUser(data?.data));
+            navigate("/projects");
+            Cookies.set("token", data?.data?.token, { expires: 1 });
+          },
+          onError: (error: AxiosError<{ message: string }>) => {
+            const errorMessage = error?.response?.data?.message;
+            console.error("Error adding project:", errorMessage);
+            toast.error(errorMessage);
+          },
         },
-      });
+      );
     },
   });
+
+  useEffect(() => {
+    if (invitationEmailParam) {
+      setValue("email", invitationEmailParam, {
+        shouldValidate: true,
+      });
+    }
+  }, [invitationEmailParam, setValue]);
+
+  useEffect(() => {
+    if (invitationQuery.data?.email) {
+      setValue("email", invitationQuery.data.email, {
+        shouldValidate: true,
+      });
+    }
+  }, [invitationQuery.data?.email, setValue]);
+
+  const invitationErrorMessage = invitationQuery.isError
+    ? (invitationQuery.error as AxiosError<{ message: string }>)?.response?.data
+        ?.message || "Invitation link is invalid or expired."
+    : "";
 
   return (
     <AuthFormWrapper>
@@ -86,6 +141,23 @@ export default function Register() {
           Register
         </Typography>
       </Grid>
+      {invitationQuery.data ? (
+        <Grid size={12}>
+          <Typography color="text.secondary" variant="body2">
+            You were invited by{" "}
+            {invitationQuery.data.invitedByUsername || "a team member"} to join{" "}
+            {invitationQuery.data.projectName}. Complete registration within 10
+            minutes.
+          </Typography>
+        </Grid>
+      ) : null}
+      {invitationErrorMessage ? (
+        <Grid size={12}>
+          <Typography color="error" variant="body2">
+            {invitationErrorMessage}
+          </Typography>
+        </Grid>
+      ) : null}
       <Grid size={12}>
         <Controller
           name="username"
@@ -111,6 +183,7 @@ export default function Register() {
               {...field}
               label="Email"
               placeholder="enter your email"
+              disabled={!!invitationToken || !!invitationEmailParam}
               fullWidth
               error={!!errors?.email}
               helperText={errors?.email?.message}
@@ -155,7 +228,11 @@ export default function Register() {
       <Grid size={12}>
         <Button
           startIcon={isPending ? <CircularProgress size={15} /> : null}
-          disabled={isPending}
+          disabled={
+            isPending ||
+            invitationQuery.isLoading ||
+            (!!invitationToken && !!invitationErrorMessage)
+          }
           fullWidth
           variant="contained"
           onClick={handleSubmit}

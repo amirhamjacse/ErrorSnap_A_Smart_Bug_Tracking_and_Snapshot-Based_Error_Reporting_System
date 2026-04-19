@@ -181,6 +181,12 @@ const theme: ThemeOptions = {
             "&.Mui-focused": {
               boxShadow: `0 0 0 4px ${alpha("#6c8cff", 0.16)}`,
             },
+            "&.Mui-disabled": {
+              backgroundColor: alpha("#94a3b8", 0.08),
+              "& fieldset": {
+                borderColor: alpha("#94a3b8", 0.22),
+              },
+            },
           },
           "& .MuiInputLabel-root": {
             color: cssColor("textSecondary"),
@@ -188,11 +194,19 @@ const theme: ThemeOptions = {
           "& .MuiInputBase-input": {
             color: cssColor("white"),
           },
+          "& .MuiInputBase-root.Mui-disabled": {
+            backgroundColor: alpha("#94a3b8", 0.08),
+          },
           "& .Mui-disabled .MuiOutlinedInput-notchedOutline": {
             borderColor: cssColor("textSecondary"),
           },
-          "& .Mui-disabled .MuiInputBase-input": {
-            color: cssColor("white"),
+          "& .MuiInputBase-input.Mui-disabled": {
+            color: alpha("#e2e8f0", 0.72),
+            WebkitTextFillColor: `${alpha("#e2e8f0", 0.72)} !important`,
+            opacity: 1,
+          },
+          "& .MuiInputLabel-root.Mui-disabled": {
+            color: alpha("#e2e8f0", 0.7),
           },
           "& .Mui-error .MuiOutlinedInput-notchedOutline": {
             borderColor: cssColor("error"),

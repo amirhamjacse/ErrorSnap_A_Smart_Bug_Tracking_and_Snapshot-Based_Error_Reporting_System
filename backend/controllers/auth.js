@@ -2,6 +2,8 @@ import User from "../classes/user.js";
 import bcrypt from "bcrypt";
 import Token from "../classes/Token.js";
 import { getTokenFromReq } from "../utils/token.js";
+import ProjectInvitationLink from "../classes/projectInvitationLink.js";
+import ProjectTeam from "../classes/projectTeam.js";
 
 export const login = async function (req, res) {
   const { email, password } = req.body;
@@ -38,23 +40,60 @@ export const login = async function (req, res) {
 };
 
 export const register = async function (req, res) {
-  const { username, email, password } = req.body;
+  const { username, email, password, invitationToken } = req.body;
+  const normalizedEmail = email?.trim()?.toLowerCase();
+
   if (!username || !email || !password) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  const prevUser = await User.getUserWithEmail(email);
+  let invitation = null;
+  if (invitationToken) {
+    invitation = await ProjectInvitationLink.getValidByToken(invitationToken);
+    if (!invitation?.id) {
+      return res
+        .status(400)
+        .json({ message: "Invitation link is invalid or expired." });
+    }
+
+    if (invitation.email?.toLowerCase() !== normalizedEmail) {
+      return res.status(400).json({
+        message: "The invitation email does not match this registration email.",
+      });
+    }
+  }
+
+  const prevUser = await User.getUserWithEmail(normalizedEmail);
   if (prevUser) {
     return res.status(400).json({ message: "User is already registered!" });
   }
 
   const values = {
     username,
-    email,
+    email: normalizedEmail,
     password,
   };
   try {
     const newUser = await User.register(values);
+
+    if (invitation?.id) {
+      const duplicate = await ProjectTeam.checkForDuplicateTeamMember(
+        invitation.project_id,
+        newUser.id
+      );
+
+      if (!duplicate) {
+        await ProjectTeam.insert({
+          project_id: invitation.project_id,
+          user_id: newUser.id,
+          invited_by: invitation.invited_by,
+          is_approved: 0,
+        });
+      }
+
+      await ProjectInvitationLink.markUsed(invitation.id);
+    }
+
     if (newUser) {
       res
         .status(201)
@@ -62,6 +101,35 @@ export const register = async function (req, res) {
     }
   } catch (error) {
     res.status(500).json({ message: "User registration failed!" });
+  }
+};
+
+export const getInvitationData = async (req, res) => {
+  const { token } = req.params;
+  if (!token) {
+    return res.status(400).json({ message: "Missing invitation token" });
+  }
+
+  try {
+    const invitation = await ProjectInvitationLink.getValidByToken(token);
+    if (!invitation?.id) {
+      return res
+        .status(400)
+        .json({ message: "Invitation link is invalid or expired." });
+    }
+
+    return res.status(200).json({
+      message: "",
+      data: {
+        email: invitation.email,
+        projectId: invitation.project_id,
+        projectName: invitation.project_name,
+        invitedByUsername: invitation.invited_by_username,
+        expiresAt: invitation.expires_at,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to load invitation." });
   }
 };
 

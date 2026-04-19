@@ -12,7 +12,10 @@ const authMiddleware = async (req, res, next) => {
     "/upload",
   ];
 
-  if (publicRoutes.includes(req.path)) {
+  if (
+    publicRoutes.includes(req.path) ||
+    req.path.startsWith("/auth/invitation/")
+  ) {
     return next();
   }
 
