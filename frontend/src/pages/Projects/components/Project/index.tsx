@@ -1,15 +1,24 @@
-import { Box, Card, CardContent, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { project } from "types/project";
 import { cssColor } from "utils/colors";
 import { format } from "date-fns";
 import ProjectErrorCount from "../ProjectErrorCount";
+import PlugIcon from "icons/PlugIcon";
+import type { MouseEvent } from "react";
 
 export default function Project({ project }: { project: project }) {
   const navigate = useNavigate();
 
   const handleProjectClick = () => {
     navigate(`/projects/${project.id}/errors`);
+  };
+
+  const handleOpenIntegration = (
+    event: MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
+    navigate(`/projects/${project.id}/settings/integration`);
   };
 
   return (
@@ -54,6 +63,17 @@ export default function Project({ project }: { project: project }) {
               Last error: {format(project?.last_error_at, "do MMM")}
             </Typography>
           ) : null}
+
+          <Box mt={2.5}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<PlugIcon />}
+              onClick={handleOpenIntegration}
+            >
+              Integration
+            </Button>
+          </Box>
         </CardContent>
       </Card>
     </>

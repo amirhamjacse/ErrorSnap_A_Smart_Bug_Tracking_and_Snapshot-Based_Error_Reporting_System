@@ -5,13 +5,16 @@ import PageContainer from "components/PageContainer";
 import ErrorFilters from "./components/ErrorFilters";
 import ListContainer from "components/ListContainer";
 import ProjectErrorsHeader from "./components/ProjectErrorsHeader";
+import ExportDialog from "./components/ExportDialog";
 import useProject from "hooks/useProject";
 import BackIcon from "icons/BackIcon";
 import useProjectId from "hooks/useProjectId";
+import { useState } from "react";
 
 export default function ProjectErrors() {
   const projectId = useProjectId();
   const navigate = useNavigate();
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const {
     data: project,
     isLoading,
@@ -40,7 +43,10 @@ export default function ProjectErrors() {
               </Button>
             </Grid>
             <Grid size={12}>
-              <ProjectErrorsHeader projectName={project?.name} />
+              <ProjectErrorsHeader
+                projectName={project?.name}
+                onOpenFilteredExport={() => setExportDialogOpen(true)}
+              />
             </Grid>
 
             <Grid size={12}>
@@ -52,6 +58,11 @@ export default function ProjectErrors() {
           </Grid>
         </ListContainer>
       </PageContainer>
+      <ExportDialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        projectId={projectId}
+      />
     </>
   );
 }
