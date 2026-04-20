@@ -51,13 +51,7 @@ import {
   getProjectApiKeys,
   revokeProjectApiKey,
 } from "../apiKeys/controller.js";
-import {
-  createCheckoutSession,
-  exportBillingUsageCsv,
-  getBillingHistory,
-  getBillingSummary,
-  recordSessionStart,
-} from "../billing/controller.js";
+import { recordSessionStart } from "../controllers/usage.js";
 import {
   getErrorPatterns,
   getPatternDetails,
@@ -115,11 +109,9 @@ router.get("/audit-logs/:projectId", getProjectAuditLogs);
 router.get("/project-api-keys/:projectId", getProjectApiKeys);
 router.post("/project-api-keys", createProjectApiKey);
 router.post("/project-api-keys/:keyId/revoke", revokeProjectApiKey);
+
+// Keep session tracking enabled for SDK compatibility.
 router.post("/usage/session-start", recordSessionStart);
-router.get("/billing/summary/:projectId", getBillingSummary);
-router.get("/billing/history/:projectId", getBillingHistory);
-router.get("/billing/summary/:projectId/export", exportBillingUsageCsv);
-router.post("/billing/checkout-session", createCheckoutSession);
 
 // pattern detection
 router.get("/patterns/:projectId", getErrorPatterns);
