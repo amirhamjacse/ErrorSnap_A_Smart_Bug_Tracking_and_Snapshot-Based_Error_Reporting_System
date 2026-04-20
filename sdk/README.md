@@ -16,6 +16,8 @@ The **ErrorSnap SDK** allows you to easily integrate ErrorSnap error tracking in
     script.onload = () => {
       const app = new ErrorSnap({
         projectId: "your-project-id", // Replace with your actual project ID
+        apiKey: "your-project-api-key", // Generate this in Project Settings > Integration
+        environment: "production", // development | staging | production
       });
       app.initialize();
     };
@@ -23,6 +25,12 @@ The **ErrorSnap SDK** allows you to easily integrate ErrorSnap error tracking in
   });
 </script>
 ```
+
+The SDK now sends the API key with each error report so the backend can authenticate and rate limit per project key.
+
+`environment` is optional. If omitted, the SDK defaults to `production`.
+
+The SDK also records a session start event on initialization. This powers usage-based billing metrics (errors logged, sessions recorded, and API calls).
 
 And you are good to go :)
 

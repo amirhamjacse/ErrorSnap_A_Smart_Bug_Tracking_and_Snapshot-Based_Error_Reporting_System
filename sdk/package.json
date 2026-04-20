@@ -4,8 +4,8 @@
   "description": "a error logger that catches error",
   "main": "src/errorSnap.js",
   "scripts": {
-    "dev": "npx webpack --mode development",
-    "prod": "npx webpack --mode production"
+    "dev": "webpack --mode development",
+    "prod": "webpack --mode production"
   },
   "author": "Asifur Rahaman",
   "license": "ISC",

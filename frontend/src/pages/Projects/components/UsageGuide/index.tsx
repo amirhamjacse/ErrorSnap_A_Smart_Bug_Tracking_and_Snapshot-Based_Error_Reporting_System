@@ -8,7 +8,7 @@ export default function UsageGuide() {
   const projectId = useProjectId();
   const scriptRef = useRef<HTMLPreElement | null>(null);
   const sourceMapRef = useRef<HTMLPreElement | null>(null);
-  const scriptSnippet = `<script>\n  window.addEventListener('load', () => {\n    const script = document.createElement('script');\n    script.src = "https://errorsnap-sdk.netlify.app/";\n    script.onload = () => {\n      const app = new ErrorSnap({\n        projectId: "${projectId}",\n      });\n      app.initialize();\n    };\n    document.body.appendChild(script);\n  });\n</script>`;
+  const scriptSnippet = `<script>\n  window.addEventListener('load', () => {\n    const script = document.createElement('script');\n    script.src = "https://errorsnap-sdk.netlify.app/";\n    script.onload = () => {\n      const app = new ErrorSnap({\n        projectId: "${projectId}",\n        apiKey: "your-project-api-key",\n      });\n      app.initialize();\n    };\n    document.body.appendChild(script);\n  });\n</script>`;
   const sourceMapSnippet = `"scripts": {\n  "postbuild": "errorsnap-upload -p ${projectId} -d <dist folder>"\n}`;
 
   return (
@@ -23,6 +23,11 @@ export default function UsageGuide() {
     >
       <Typography variant="h6" mb={2}>
         ErrorSnap Usage Guide
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ mt: 1 }}>
+        Generate a project API key from Project Settings &gt; Integration and
+        pass it to the SDK config as <b>apiKey</b>.
       </Typography>
 
       <Copy
@@ -62,7 +67,7 @@ export default function UsageGuide() {
         sx={{ mt: 2.5, alignItems: "center" }}
       >
         <Typography color="text.secondary">
-          For source map support add this script to your build process.
+          For source map support add this script in <b>package.json</b> file in your project.
         </Typography>
       </Copy>
 

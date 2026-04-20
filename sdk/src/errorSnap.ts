@@ -2,28 +2,41 @@ import { toPng } from "html-to-image";
 
 interface config {
   projectId: string;
+  apiKey?: string;
+  environment?: "development" | "staging" | "production";
 }
 
 interface errorData {
   type: string;
   projectId?: string;
+  apiKey?: string;
   message: string | Event;
   source?: string;
   lineno?: number | undefined;
   colno?: number | undefined;
   stack: string | null | undefined;
   timestamp?: string;
+  environment?: string;
 }
+
+const ALLOWED_ENVIRONMENTS = ["development", "staging", "production"];
 
 export default class ErrorSnap {
   projectId: string;
+  apiKey?: string;
+  environment: string;
+  sessionId: string;
 
   constructor(config: config) {
     this.projectId = config.projectId;
+    this.apiKey = config.apiKey;
+    this.environment = this.normalizeEnvironment(config.environment);
+    this.sessionId = this.generateSessionId();
   }
 
   initialize() {
     console.log("Initilized ErrorSnap with project id:", this.projectId);
+    this.trackSessionStart();
     this.initErrorHandling();
   }
 
@@ -56,6 +69,9 @@ export default class ErrorSnap {
       browser,
       os,
       projectId: this.projectId,
+      apiKey: this.apiKey,
+      sessionId: this.sessionId,
+      environment: this.environment,
       timestamp: new Date().toISOString(),
     };
 
@@ -146,5 +162,65 @@ export default class ErrorSnap {
     if (userAgent.includes("iPhone") || userAgent.includes("iPad"))
       return "iOS";
     return "Unknown OS";
+  }
+
+  normalizeEnvironment(value?: string) {
+    if (!value) {
+      return "production";
+    }
+
+    const normalized = value.trim().toLowerCase();
+    if (!ALLOWED_ENVIRONMENTS.includes(normalized)) {
+      return "production";
+    }
+
+    return normalized;
+  }
+
+  generateSessionId() {
+    return `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  getSessionStartUrl() {
+    const errorLogsUrl = process.env.ERROR_LOGS_API_URL;
+    if (!errorLogsUrl) {
+      return "";
+    }
+
+    if (/\/error-logs\/?$/.test(errorLogsUrl)) {
+      return errorLogsUrl.replace(/\/error-logs\/?$/, "/usage/session-start");
+    }
+
+    if (errorLogsUrl.startsWith("/")) {
+      return "/usage/session-start";
+    }
+
+    try {
+      const parsedUrl = new URL(errorLogsUrl);
+      return `${parsedUrl.origin}/usage/session-start`;
+    } catch {
+      return "";
+    }
+  }
+
+  trackSessionStart() {
+    const sessionStartUrl = this.getSessionStartUrl();
+    if (!sessionStartUrl) {
+      return;
+    }
+
+    fetch(sessionStartUrl, {
+      method: "POST",
+      body: JSON.stringify({
+        projectId: this.projectId,
+        apiKey: this.apiKey,
+        sessionId: this.sessionId,
+        environment: this.environment,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      keepalive: true,
+    }).catch((err) => console.error("Failed to track session:", err));
   }
 }
