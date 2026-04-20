@@ -6,6 +6,7 @@ import sourceMap from "source-map";
 import Errorlog from "../classes/errorlog.js";
 import Project from "../classes/project.js";
 import Slack from "../classes/slack.js";
+import Discord from "../classes/discord.js";
 import { getCurrentDateTime } from "../utils/date.js";
 import ProjectTeam from "../classes/projectTeam.js";
 import AuditLog from "../auditLogs/auditLog.js";
@@ -161,6 +162,7 @@ export const sendProjectError = async (req, res) => {
       .json({ message: "Error logged successfully", id: responseId });
 
     Slack.sendMessage(values, effectiveProjectId);
+    Discord.sendMessage(values, effectiveProjectId);
   } catch (error) {
     console.error("Error logging error:", error);
     res.status(500).json({ message: "Error logging error" });

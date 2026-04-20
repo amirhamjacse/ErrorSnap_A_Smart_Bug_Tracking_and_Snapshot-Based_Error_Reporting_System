@@ -34,9 +34,15 @@ import {
 import {
   addChannelId,
   getConnectedSlackDetails,
+  removeSlackIntegration,
   slackConnectFinalize,
   slackConnectInit,
 } from "../controllers/slack.js";
+import {
+  connectDiscordIntegration,
+  getConnectedDiscordDetails,
+  removeDiscordIntegration,
+} from "../controllers/discord.js";
 import { upload, uploadSourceMaps } from "../controllers/sourcemaps.js";
 import { getAllHistory } from "../controllers/sourcemapHistory.js";
 import { getProjectAuditLogs } from "../auditLogs/controller.js";
@@ -101,6 +107,10 @@ router.get("/slack/oauth/start", slackConnectInit);
 router.get("/slack/callback", slackConnectFinalize);
 router.get("/slack/details/:projectId", getConnectedSlackDetails);
 router.post("/slack/add-channel", addChannelId);
+router.post("/slack/disconnect", removeSlackIntegration);
+router.get("/discord/details/:projectId", getConnectedDiscordDetails);
+router.post("/discord/connect", connectDiscordIntegration);
+router.post("/discord/disconnect", removeDiscordIntegration);
 router.get("/audit-logs/:projectId", getProjectAuditLogs);
 router.get("/project-api-keys/:projectId", getProjectApiKeys);
 router.post("/project-api-keys", createProjectApiKey);

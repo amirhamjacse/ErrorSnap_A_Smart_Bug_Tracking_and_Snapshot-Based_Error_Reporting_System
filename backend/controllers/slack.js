@@ -93,3 +93,23 @@ export const getConnectedSlackDetails = async (req, res) => {
     res.status(500).json({ message: "Fetching channel details failed!" });
   }
 };
+
+export const removeSlackIntegration = async (req, res) => {
+  const { projectId } = req.body;
+
+  if (!projectId) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  const isProjectMember = await ProjectTeam.isProjectMember(projectId);
+  if (!isProjectMember.length) {
+    return res.status(404).json({ message: "Slack details not found!" });
+  }
+
+  try {
+    await Slack.deleteByProjectId(projectId);
+    return res.status(200).json({ message: "Slack integration removed" });
+  } catch (error) {
+    return res.status(500).json({ message: "Removing Slack integration failed!" });
+  }
+};

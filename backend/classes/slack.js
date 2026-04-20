@@ -82,6 +82,22 @@ export default class Slack {
     });
   }
 
+  static deleteByProjectId(projectId) {
+    const query = `DELETE FROM ${Slack.table} WHERE project_id=?`;
+    const params = [projectId];
+
+    return new Promise((resolve, reject) => {
+      con.query(query, params, (err, results) => {
+        if (err) {
+          console.error("Error executing query:", err);
+          return reject(err);
+        }
+
+        resolve(results);
+      });
+    });
+  }
+
   static async isValidChannel(channelId, projectId) {
     return new Promise(async (resolve, reject) => {
       try {

@@ -6,11 +6,13 @@ dotend.config({
 });
 
 const requiredEnvNames = ["DB_HOST", "DB_USER", "DB_PASS", "DB_NAME"];
-const missingEnvNames = requiredEnvNames.filter((name) => !process.env[name]);
+const missingEnvNames = requiredEnvNames.filter(
+  (name) => process.env[name] === undefined,
+);
 
 if (missingEnvNames.length) {
   throw new Error(
-    `Missing backend environment variables: ${missingEnvNames.join(", ")}. Create backend/.env from backend/env.example before starting the server.`
+    `Missing backend environment variables: ${missingEnvNames.join(", ")}. Create backend/.env from backend/env.example before starting the server.`,
   );
 }
 
