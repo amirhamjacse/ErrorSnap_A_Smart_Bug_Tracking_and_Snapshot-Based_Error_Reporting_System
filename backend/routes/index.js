@@ -39,6 +39,7 @@ import {
 } from "../controllers/slack.js";
 import { upload, uploadSourceMaps } from "../controllers/sourcemaps.js";
 import { getAllHistory } from "../controllers/sourcemapHistory.js";
+import { getProjectAuditLogs } from "../auditLogs/controller.js";
 
 const router = express.Router();
 
@@ -76,6 +77,7 @@ router.get("/slack/oauth/start", slackConnectInit);
 router.get("/slack/callback", slackConnectFinalize);
 router.get("/slack/details/:projectId", getConnectedSlackDetails);
 router.post("/slack/add-channel", addChannelId);
+router.get("/audit-logs/:projectId", getProjectAuditLogs);
 
 //source maps
 router.post("/upload", upload.array("source-maps"), uploadSourceMaps);

@@ -4,6 +4,7 @@ import User from "../classes/user.js";
 import MailService from "../classes/MailService.js";
 import { randomBytes } from "crypto";
 import ProjectInvitationLink from "../classes/projectInvitationLink.js";
+import AuditLog from "../auditLogs/auditLog.js";
 
 function toMySqlDateTime(date) {
   const pad = (value) => String(value).padStart(2, "0");
@@ -67,6 +68,21 @@ export const sendTeamInvitation = async (req, res) => {
         is_approved: 0,
       });
 
+      void AuditLog.record({
+        projectId,
+        actorId: currentUser?.id,
+        actorName: currentUser?.username || "System",
+        action: "team.invited",
+        entityType: "team_member",
+        entityId: String(user?.id),
+        summary: `${currentUser?.username} invited ${user?.email} to ${project?.name}`,
+        metadata: {
+          invitedEmail: user?.email,
+          projectName: project?.name,
+          invitationType: "existing-user",
+        },
+      }).catch((error) => console.error("Audit log insert failed:", error));
+
       return res.status(201).json({ message: "Invitation sent successfully" });
     } catch (error) {
       return res.status(500).json({ message: "Invitation sending failed!" });
@@ -107,6 +123,21 @@ export const sendTeamInvitation = async (req, res) => {
       text: `Hi, ${currentUser?.username} invited you to join project ${project?.name} on ErrorSnap. Complete your registration with this link (valid for 10 minutes): ${registerLink}`,
       html: `Hi, <b>${currentUser?.username}</b> invited you to join project <b>${project?.name}</b> on ErrorSnap.<br/><br/>Complete your registration using this link (valid for <b>10 minutes</b>):<br/><a href="${registerLink}">${registerLink}</a>`,
     });
+
+    void AuditLog.record({
+      projectId,
+      actorId: currentUser?.id,
+      actorName: currentUser?.username || "System",
+      action: "team.invitation_link_sent",
+      entityType: "team_invitation",
+      entityId: String(projectId),
+      summary: `${currentUser?.username} sent an invitation link to ${normalizedEmail}`,
+      metadata: {
+        invitedEmail: normalizedEmail,
+        projectName: project?.name,
+        invitationType: "registration-link",
+      },
+    }).catch((error) => console.error("Audit log insert failed:", error));
 
     return res.status(201).json({
       message:
@@ -204,7 +235,23 @@ export const approvePendingMember = async (req, res) => {
   }
 
   try {
+    const member = await ProjectTeam.getById(memberId);
     await ProjectTeam.approveMember(memberId);
+
+    void AuditLog.record({
+      projectId: member?.project_id,
+      actorId: req.errorsnapUser?.id,
+      actorName: req.errorsnapUser?.username || "System",
+      action: "team.member_approved",
+      entityType: "team_member",
+      entityId: String(memberId),
+      summary: `Member ${member?.username || member?.email || memberId} was approved`,
+      metadata: {
+        userId: member?.user_id,
+        email: member?.email,
+      },
+    }).catch((error) => console.error("Audit log insert failed:", error));
+
     res.status(201).json({ message: "Member approved successfully", data: [] });
   } catch (error) {
     res.status(500).json({ message: "Member approving failed!" });
@@ -222,16 +269,63 @@ export const cancelPendingInvitation = async (req, res) => {
     const [type, rawId] = String(memberId).split("-");
 
     if (type === "link") {
+      const invitation = await ProjectInvitationLink.getById(rawId);
       await ProjectInvitationLink.deleteById(rawId);
+
+      void AuditLog.record({
+        projectId: invitation?.project_id,
+        actorId: req.errorsnapUser?.id,
+        actorName: req.errorsnapUser?.username || "System",
+        action: "team.invitation_cancelled",
+        entityType: "team_invitation",
+        entityId: String(rawId),
+        summary: `Invitation link for ${invitation?.email || rawId} was cancelled`,
+        metadata: {
+          invitedEmail: invitation?.email,
+        },
+      }).catch((error) => console.error("Audit log insert failed:", error));
+
       return res.status(201).json({ message: "Invitation deleted", data: [] });
     }
 
     if (type === "team") {
+      const member = await ProjectTeam.getById(rawId);
       await ProjectTeam.deleteMember(rawId);
+
+      void AuditLog.record({
+        projectId: member?.project_id,
+        actorId: req.errorsnapUser?.id,
+        actorName: req.errorsnapUser?.username || "System",
+        action: "team.invitation_cancelled",
+        entityType: "team_member",
+        entityId: String(rawId),
+        summary: `Pending team invite for ${member?.username || member?.email || rawId} was cancelled`,
+        metadata: {
+          userId: member?.user_id,
+          email: member?.email,
+        },
+      }).catch((error) => console.error("Audit log insert failed:", error));
+
       return res.status(201).json({ message: "Invitation deleted", data: [] });
     }
 
+    const member = await ProjectTeam.getById(memberId);
     await ProjectTeam.deleteMember(memberId);
+
+    void AuditLog.record({
+      projectId: member?.project_id,
+      actorId: req.errorsnapUser?.id,
+      actorName: req.errorsnapUser?.username || "System",
+      action: "team.invitation_cancelled",
+      entityType: "team_member",
+      entityId: String(memberId),
+      summary: `Invitation for ${member?.username || member?.email || memberId} was cancelled`,
+      metadata: {
+        userId: member?.user_id,
+        email: member?.email,
+      },
+    }).catch((error) => console.error("Audit log insert failed:", error));
+
     res.status(201).json({ message: "Invitation deleted", data: [] });
   } catch (error) {
     res.status(500).json({ message: "Invitation deleting failed!" });
@@ -246,7 +340,23 @@ export const removeTeamMember = async (req, res) => {
   }
 
   try {
+    const member = await ProjectTeam.getById(memberId);
     await ProjectTeam.deleteMember(memberId);
+
+    void AuditLog.record({
+      projectId: member?.project_id,
+      actorId: req.errorsnapUser?.id,
+      actorName: req.errorsnapUser?.username || "System",
+      action: "team.member_removed",
+      entityType: "team_member",
+      entityId: String(memberId),
+      summary: `Member ${member?.username || member?.email || memberId} was removed from the team`,
+      metadata: {
+        userId: member?.user_id,
+        email: member?.email,
+      },
+    }).catch((error) => console.error("Audit log insert failed:", error));
+
     res.status(201).json({ message: "Member removed from team", data: [] });
   } catch (error) {
     res.status(500).json({ message: "Member removing failed!" });

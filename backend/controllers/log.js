@@ -8,6 +8,7 @@ import Project from "../classes/project.js";
 import Slack from "../classes/slack.js";
 import { getCurrentDateTime } from "../utils/date.js";
 import ProjectTeam from "../classes/projectTeam.js";
+import AuditLog from "../auditLogs/auditLog.js";
 
 async function resolveOriginalPosition({
   source,
@@ -253,7 +254,22 @@ export const assignUserToError = async (req, res) => {
   }
 
   try {
+    const errorLog = await Errorlog.selectById(errorId);
     await Errorlog.assignUser(userId, errorId);
+
+    void AuditLog.record({
+      projectId: errorLog?.project_id,
+      actorId: req.errorsnapUser?.id,
+      actorName: req.errorsnapUser?.username || "System",
+      action: "error.assigned",
+      entityType: "error",
+      entityId: errorId,
+      summary: `Error ${errorId} was assigned`,
+      metadata: {
+        assigneeId: userId,
+      },
+    }).catch((error) => console.error("Audit log insert failed:", error));
+
     res.status(201).json({ message: "Assign successfull" });
   } catch (error) {
     console.error("Error:", error);
@@ -269,7 +285,20 @@ export const resolveError = async (req, res) => {
   }
 
   try {
+    const errorLog = await Errorlog.selectById(errorId);
     await Errorlog.resolve(errorId);
+
+    void AuditLog.record({
+      projectId: errorLog?.project_id,
+      actorId: req.errorsnapUser?.id,
+      actorName: req.errorsnapUser?.username || "System",
+      action: "error.resolved",
+      entityType: "error",
+      entityId: errorId,
+      summary: `Error ${errorId} was resolved`,
+      metadata: {},
+    }).catch((error) => console.error("Audit log insert failed:", error));
+
     res.status(201).json({ message: "Error resolved successfull" });
   } catch (error) {
     console.error("Error:", error);

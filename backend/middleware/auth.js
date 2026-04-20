@@ -27,7 +27,7 @@ const authMiddleware = async (req, res, next) => {
 
   const tokenVerified = await Token.verify(token);
   if (!tokenVerified) {
-    console.error("Token verification error:", err);
+    console.error("Token verification error:", tokenVerified);
     return res
       .status(403)
       .json({ success: false, message: "Unauthorized user!" });

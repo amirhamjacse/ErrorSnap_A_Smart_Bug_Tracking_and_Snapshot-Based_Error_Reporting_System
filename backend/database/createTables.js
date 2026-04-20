@@ -6,6 +6,7 @@ import createProjectTeamTable from "../tables/projectTeam.js";
 import createSlackIntegrationTable from "../tables/slackIntegration.js";
 import createSourcemapHistoryTable from "../tables/sourcemapHistory.js";
 import createProjectInvitationLinkTable from "../tables/projectInvitationLink.js";
+import createAuditLogsTable from "../auditLogs/table.js";
 
 con.connect(function (error) {
   if (error) {
@@ -22,4 +23,5 @@ con.connect(function (error) {
   createSlackIntegrationTable();
   createSourcemapHistoryTable();
   createProjectInvitationLinkTable();
+  createAuditLogsTable();
 });

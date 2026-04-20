@@ -3,6 +3,21 @@ import { con } from "../database/connection.js";
 export default class ProjectInvitationLink {
   static table = "project_invitation_links";
 
+  static getById(id) {
+    const sql = `SELECT * FROM ${ProjectInvitationLink.table} WHERE id = ? LIMIT 1`;
+    const params = [id];
+
+    return new Promise((resolve, reject) => {
+      con.query(sql, params, (err, results) => {
+        if (err) {
+          return reject(err);
+        }
+
+        resolve(results[0] || null);
+      });
+    });
+  }
+
   static insert(values) {
     const columns = Object.keys(values).join(", ");
     const placeholders = Object.keys(values)

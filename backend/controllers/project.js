@@ -5,6 +5,7 @@ import ErrorsnapDb from "../classes/errorsnapdb.js";
 import Project from "../classes/project.js";
 import ProjectTeam from "../classes/projectTeam.js";
 import Errorlog from "../classes/errorlog.js";
+import AuditLog from "../auditLogs/auditLog.js";
 
 export const addProject = async (req, res) => {
   const user_id = req.errorsnapUser?.id;
@@ -36,6 +37,17 @@ export const addProject = async (req, res) => {
         project_id: id,
         user_id,
       });
+
+      void AuditLog.record({
+        projectId: id,
+        actorId: user_id,
+        actorName: req.errorsnapUser?.username || "System",
+        action: "project.created",
+        entityType: "project",
+        entityId: id,
+        summary: `Project ${name} was created`,
+        metadata: { name, description },
+      }).catch((error) => console.error("Audit log insert failed:", error));
 
       if (projectTeamInserted) {
         res.status(201).json({ message: "Project added successfully" });
@@ -120,6 +132,19 @@ export const deleteProject = async (req, res) => {
 
     // delete source maps
     deleteProjectSourceMaps(project[0]);
+
+    void AuditLog.record({
+      projectId,
+      actorId: req.errorsnapUser?.id,
+      actorName: req.errorsnapUser?.username || "System",
+      action: "project.deleted",
+      entityType: "project",
+      entityId: projectId,
+      summary: `Project ${project[0]?.name || projectId} was deleted`,
+      metadata: {
+        projectName: project[0]?.name,
+      },
+    }).catch((error) => console.error("Audit log insert failed:", error));
 
     res.status(201).json({ message: "Project deleted successfully" });
   } catch (error) {

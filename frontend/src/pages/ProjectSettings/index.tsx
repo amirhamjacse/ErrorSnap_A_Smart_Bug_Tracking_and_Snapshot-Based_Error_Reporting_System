@@ -9,6 +9,8 @@ import ProjectSettingsTeam from "./components/ProjectSettingsTeam";
 import ProjectSettingsGeneral from "./components/ProjectSettingsGeneral";
 import ProjectSettingsIntegration from "./components/ProjectSettingsIntegration";
 import PlugIcon from "icons/PlugIcon";
+import WatchIcon from "icons/WatchIcon";
+import ProjectSettingsActivity from "./components/ProjectSettingsActivity";
 
 const menuItems: menuItem[] = [
   {
@@ -28,6 +30,12 @@ const menuItems: menuItem[] = [
     label: "Integration",
     component: <ProjectSettingsIntegration />,
     path: (projectId) => `/projects/${projectId}/settings/integration`,
+  },
+  {
+    icon: <WatchIcon fontSize={20} color="white" />,
+    label: "Activity",
+    component: <ProjectSettingsActivity />,
+    path: (projectId) => `/projects/${projectId}/settings/activity`,
   },
 ];
 

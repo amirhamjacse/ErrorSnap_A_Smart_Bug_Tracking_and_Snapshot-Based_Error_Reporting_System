@@ -29,6 +29,7 @@ The system is designed for production observability workflows, especially for te
 - Error details including message, stack trace, source, line, column, browser, OS, screenshot, and status.
 - Error assignment and resolution workflow.
 - Team invitations and member approval flow.
+- Project activity log and audit trail for key administrative actions.
 - Slack OAuth integration and channel binding.
 - Source-map upload history for symbolicated production stack traces.
 - Dashboard views for projects, project errors, assigned errors, invitations, and settings.
@@ -150,6 +151,7 @@ The backend boots through `backend/app.js`, loads environment variables, applies
 ### Important Backend Folders
 
 - `controllers` contains the request handlers for auth, logs, projects, teams, Slack, and source maps.
+- `auditLogs` contains the isolated audit-trail feature used by the dashboard activity page.
 - `classes` contains reusable service objects such as token handling, mail sending, Slack helpers, and database-backed domain models.
 - `database` contains the MySQL connection and automatic table creation bootstrap.
 - `tables` contains the schema definitions executed on startup.
@@ -166,6 +168,7 @@ The frontend is a React dashboard built with Vite and TypeScript. It uses a prot
 - `ProjectErrors` - error table and filters for a selected project.
 - `ProjectErrorDetails` - detailed error inspection with metadata and assignee controls.
 - `ProjectSettings` - general settings, team management, and integration settings.
+- `ProjectSettingsActivity` - audit trail of project, team, and error actions.
 - `AssignedErrors` - errors assigned to the current user.
 - `Invitations` - incoming project invitations.
 - `Login` and `Register` - authentication screens.

@@ -5,6 +5,22 @@ import User from "./user.js";
 export default class ProjectTeam {
   static table = "project_team";
 
+  static getById(memberId) {
+    const checkSql = `SELECT pt.*, u.username, u.email FROM ${ProjectTeam.table} pt LEFT JOIN ${User.table} u ON pt.user_id = u.id WHERE pt.id = ? LIMIT 1`;
+    const checkParams = [memberId];
+
+    return new Promise((resolve, reject) => {
+      con.query(checkSql, checkParams, (err, results) => {
+        if (err) {
+          console.error("Error executing query:", err);
+          return reject(err);
+        }
+
+        resolve(results?.[0] || null);
+      });
+    });
+  }
+
   static insert(values) {
     const columns = Object.keys(values).join(", ");
     const placeholders = Object.keys(values)
