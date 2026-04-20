@@ -40,6 +40,30 @@ import {
 import { upload, uploadSourceMaps } from "../controllers/sourcemaps.js";
 import { getAllHistory } from "../controllers/sourcemapHistory.js";
 import { getProjectAuditLogs } from "../auditLogs/controller.js";
+import {
+  createProjectApiKey,
+  getProjectApiKeys,
+  revokeProjectApiKey,
+} from "../apiKeys/controller.js";
+import {
+  createCheckoutSession,
+  exportBillingUsageCsv,
+  getBillingHistory,
+  getBillingSummary,
+  recordSessionStart,
+} from "../billing/controller.js";
+import {
+  getErrorPatterns,
+  getPatternDetails,
+} from "../controllers/pattern.js";
+import { getPublicProjectStatus } from "../controllers/publicStatus.js";
+import { getErrorExplanation } from "../controllers/ai.js";
+import { getFixSuggestions } from "../controllers/fix.js";
+import {
+  exportErrorsCsv,
+  exportErrorsJson,
+  getExportPreview,
+} from "../controllers/export.js";
 
 const router = express.Router();
 
@@ -78,6 +102,26 @@ router.get("/slack/callback", slackConnectFinalize);
 router.get("/slack/details/:projectId", getConnectedSlackDetails);
 router.post("/slack/add-channel", addChannelId);
 router.get("/audit-logs/:projectId", getProjectAuditLogs);
+router.get("/project-api-keys/:projectId", getProjectApiKeys);
+router.post("/project-api-keys", createProjectApiKey);
+router.post("/project-api-keys/:keyId/revoke", revokeProjectApiKey);
+router.post("/usage/session-start", recordSessionStart);
+router.get("/billing/summary/:projectId", getBillingSummary);
+router.get("/billing/history/:projectId", getBillingHistory);
+router.get("/billing/summary/:projectId/export", exportBillingUsageCsv);
+router.post("/billing/checkout-session", createCheckoutSession);
+
+// pattern detection
+router.get("/patterns/:projectId", getErrorPatterns);
+router.get("/patterns/:projectId/details", getPatternDetails);
+router.get("/public/status/:projectId", getPublicProjectStatus);
+router.post("/ai/error-explanation/:errorId", getErrorExplanation);
+router.post("/fix/suggest/:errorId", getFixSuggestions);
+
+// export
+router.post("/export/:projectId/csv", exportErrorsCsv);
+router.post("/export/:projectId/json", exportErrorsJson);
+router.post("/export/:projectId/preview", getExportPreview);
 
 //source maps
 router.post("/upload", upload.array("source-maps"), uploadSourceMaps);

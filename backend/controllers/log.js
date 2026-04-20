@@ -9,6 +9,9 @@ import Slack from "../classes/slack.js";
 import { getCurrentDateTime } from "../utils/date.js";
 import ProjectTeam from "../classes/projectTeam.js";
 import AuditLog from "../auditLogs/auditLog.js";
+import { normalizeEnvironment } from "../utils/environment.js";
+import ProjectApiKey from "../apiKeys/projectApiKey.js";
+import UsageMeter from "../billing/usageMeter.js";
 
 async function resolveOriginalPosition({
   source,
@@ -17,6 +20,14 @@ async function resolveOriginalPosition({
   projectId,
   userId,
 }) {
+  if (!source || !lineno || typeof colno === "undefined" || colno === null) {
+    return {
+      source,
+      lineno,
+      colno,
+    };
+  }
+
   const fileName = path.basename(source);
   const mapPath = path.join(
     __dirname,
@@ -56,6 +67,7 @@ export const sendProjectError = async (req, res) => {
   const {
     message,
     projectId,
+    apiKey,
     source,
     lineno,
     colno,
@@ -64,21 +76,36 @@ export const sendProjectError = async (req, res) => {
     browser,
     image,
     type,
+    environment,
   } = req.body;
 
   if (type === "unhandledrejection") {
-    if (!projectId) {
+    if (!projectId && !apiKey) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-  } else if (!message || !projectId || !source || !stack) {
+  } else if (!message || (!projectId && !apiKey) || !source || !stack) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
   // check if project exists
-  const project = await Project.getById(projectId);
+  let project = null;
+
+  if (apiKey) {
+    const apiKeyResult = await ProjectApiKey.consume(apiKey);
+    if (!apiKeyResult.ok) {
+      return res.status(apiKeyResult.status).json({ message: apiKeyResult.message });
+    }
+
+    project = await Project.getById(apiKeyResult.projectId);
+  } else {
+    project = await Project.getById(projectId);
+  }
+
   if (!project) {
     return res.status(400).json({ message: "Project not exists!" });
   }
+
+  const effectiveProjectId = project?.id || projectId;
 
   const errorId = nanoid(8);
 
@@ -91,19 +118,20 @@ export const sendProjectError = async (req, res) => {
     source,
     lineno,
     colno,
-    projectId,
+    projectId: effectiveProjectId,
     userId: project?.user_id,
   });
 
   const values = {
     id: errorId,
     message: message || "",
-    project_id: projectId,
+    project_id: effectiveProjectId,
     source: result.source,
     lineno: result.lineno,
     colno: result.colno,
     os,
     browser,
+    environment: normalizeEnvironment(environment),
     stack,
     status: 0,
     created_at: currentDate,
@@ -112,6 +140,8 @@ export const sendProjectError = async (req, res) => {
   const duplicateError = await Errorlog.duplicateError(values);
   if (duplicateError) {
     await Errorlog.updateErrorTime(duplicateError?.id);
+    await UsageMeter.incrementMetric(effectiveProjectId, "api_calls");
+    await UsageMeter.incrementMetric(effectiveProjectId, "errors_logged");
     return res.status(201).json({ message: "Error updated successfully" });
   }
 
@@ -119,15 +149,18 @@ export const sendProjectError = async (req, res) => {
     const results = await Errorlog.insert(values);
     const responseId = results.insertId ? results.insertId : errorId;
 
-    await Project.update(projectId, {
+    await Project.update(effectiveProjectId, {
       last_error_at: currentDate,
     });
+
+    await UsageMeter.incrementMetric(effectiveProjectId, "api_calls");
+    await UsageMeter.incrementMetric(effectiveProjectId, "errors_logged");
 
     res
       .status(201)
       .json({ message: "Error logged successfully", id: responseId });
 
-    Slack.sendMessage(values, projectId);
+    Slack.sendMessage(values, effectiveProjectId);
   } catch (error) {
     console.error("Error logging error:", error);
     res.status(500).json({ message: "Error logging error" });
@@ -186,6 +219,7 @@ export const exportProjectErrorsCsv = async (req, res) => {
       "lineno",
       "colno",
       "os",
+      "environment",
       "browser",
       "status",
       "assignee_id",
@@ -201,6 +235,7 @@ export const exportProjectErrorsCsv = async (req, res) => {
         row.lineno,
         row.colno,
         row.os,
+        row.environment,
         row.browser,
         errorStatusLabel[row.status] || "Unknown",
         row.assignee_id,
@@ -308,7 +343,9 @@ export const resolveError = async (req, res) => {
 
 export const getAssignedErrors = async (req, res) => {
   try {
-    const results = await Errorlog.assigned();
+    const results = await Errorlog.assigned({
+      environment: req.query?.environment,
+    });
     res.status(201).json({ message: "", data: results });
   } catch (error) {
     console.error("Error:", error);

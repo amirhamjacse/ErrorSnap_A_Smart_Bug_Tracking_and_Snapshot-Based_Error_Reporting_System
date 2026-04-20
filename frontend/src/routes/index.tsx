@@ -9,6 +9,9 @@ import { Navigate } from "react-router-dom";
 import Invitations from "pages/Invitations";
 import AuthGuard from "components/AuthGuard";
 import AssignedErrors from "pages/AssignedErrors";
+import BillingPaymentSuccess from "pages/BillingPaymentSuccess";
+import BillingPaymentCancel from "pages/BillingPaymentCancel";
+import PublicStatusPage from "pages/PublicStatusPage";
 
 const routesConfig = [
   {
@@ -47,12 +50,40 @@ const routesConfig = [
         element: <ProjectSettings />,
       },
       {
+        path: "/projects/:projectId/settings/patterns",
+        element: <ProjectSettings />,
+      },
+      {
+        path: "/projects/:projectId/settings/public-status",
+        element: <ProjectSettings />,
+      },
+      {
+        path: "/projects/:projectId/settings/billing",
+        element: <ProjectSettings />,
+      },
+      {
+        path: "/projects/:projectId/settings/usage",
+        element: <ProjectSettings />,
+      },
+      {
+        path: "/projects/:projectId/settings/plans",
+        element: <ProjectSettings />,
+      },
+      {
         path: "/invitations",
         element: <Invitations />,
       },
       {
         path: "/assigned-errors",
         element: <AssignedErrors />,
+      },
+      {
+        path: "/billing/success",
+        element: <BillingPaymentSuccess />,
+      },
+      {
+        path: "/billing/cancel",
+        element: <BillingPaymentCancel />,
       },
     ],
   },
@@ -67,6 +98,10 @@ const routesConfig = [
   {
     path: "/Login",
     element: <Navigate to="/login" replace />,
+  },
+  {
+    path: "/status/:projectId",
+    element: <PublicStatusPage />,
   },
   {
     path: "*",

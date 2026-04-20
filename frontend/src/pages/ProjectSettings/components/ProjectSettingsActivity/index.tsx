@@ -22,9 +22,16 @@ function formatMetadata(metadata: unknown) {
   }
 
   if (typeof metadata === "object") {
-    return Object.entries(metadata as Record<string, unknown>)
-      .map(([key, value]) => `${key}: ${String(value)}`)
-      .join("\n");
+    const parts: string[] = [];
+    const metadataRecord = metadata as Record<string, unknown>;
+
+    for (const key in metadataRecord) {
+      if (Object.prototype.hasOwnProperty.call(metadataRecord, key)) {
+        parts.push(`${key}: ${String(metadataRecord[key])}`);
+      }
+    }
+
+    return parts.join("\n");
   }
 
   return String(metadata);

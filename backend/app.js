@@ -1,5 +1,8 @@
 import dotend from "dotenv";
-dotend.config();
+
+dotend.config({
+  path: new URL("./.env", import.meta.url),
+});
 
 import cookieParser from "cookie-parser";
 import express from "express";

@@ -32,6 +32,13 @@ The system is designed for production observability workflows, especially for te
 - Project activity log and audit trail for key administrative actions.
 - Slack OAuth integration and channel binding.
 - Source-map upload history for symbolicated production stack traces.
+- Public project status page for shareable service health visibility.
+- AI-powered error explanations using Gemini free tier.
+- AI-powered fix suggestions with code snippets and implementation steps.
+- Error export to CSV and JSON formats with advanced filtering.
+- Export preview before download to verify filtered results.
+- Project Errors quick actions: Integration Guide, Filtered Export, Export Logs, and Settings.
+- Project card quick-access Integration button.
 - Dashboard views for projects, project errors, assigned errors, invitations, and settings.
 
 ## Tech Stack
@@ -144,10 +151,18 @@ The backend boots through `backend/app.js`, loads environment variables, applies
   - `GET /slack/callback`
   - `GET /slack/details/:projectId`
   - `POST /slack/add-channel`
+- AI features
+  - `POST /ai/error-explanation/:errorId` - Generate AI explanation for an error
+  - `POST /fix/suggest/:errorId` - Generate AI-powered fix suggestions
+- Public status
+  - `GET /public/status/:projectId` - Public project health and status endpoint
 - Source maps
   - `POST /upload`
   - `GET /sourcemap-history/:projectId`
-
+- Export
+  - `POST /export/:projectId/csv` - Export errors as CSV with filters
+  - `POST /export/:projectId/json` - Export errors as JSON with filters
+  - `POST /export/:projectId/preview` - Preview export data before download
 ### Important Backend Folders
 
 - `controllers` contains the request handlers for auth, logs, projects, teams, Slack, and source maps.
@@ -169,6 +184,7 @@ The frontend is a React dashboard built with Vite and TypeScript. It uses a prot
 - `ProjectErrorDetails` - detailed error inspection with metadata and assignee controls.
 - `ProjectSettings` - general settings, team management, and integration settings.
 - `ProjectSettingsActivity` - audit trail of project, team, and error actions.
+- `PublicStatusPage` - public, no-auth project status visibility page.
 - `AssignedErrors` - errors assigned to the current user.
 - `Invitations` - incoming project invitations.
 - `Login` and `Register` - authentication screens.
@@ -321,6 +337,8 @@ The codebase also references these optional runtime variables:
 - `SLACK_SCOPE`
 - `EMAIL_USERNAME`
 - `EMAIL_PASSWORD`
+- `GEMINI_API_KEY` - API key for Google Generative AI (optional, enables AI features)
+- `GEMINI_MODEL` - Gemini model to use (default: `gemini-1.5-flash`)
 
 ## Local Development
 
@@ -355,6 +373,9 @@ npm run dev
 - The frontend API client is currently configured to talk to `http://127.0.0.1:3000/` during local development.
 - The SDK can be hosted independently and consumed from a production URL.
 - Source maps are optional but strongly recommended if you want production stack traces to resolve back to original source lines.
+- AI Error Explanation and Fix Suggestions use `GEMINI_API_KEY` and fall back to local heuristic analysis when the key is not configured.
+- Both AI features (Error Explanation and Fix Suggestions) are available on the error details page in the right sidebar.
+- Error export is available from the ProjectErrors page with advanced filtering options for date range, status, browser, OS, environment, and message search.
 
 ## License
 

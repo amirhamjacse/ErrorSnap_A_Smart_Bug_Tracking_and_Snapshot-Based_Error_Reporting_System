@@ -7,6 +7,7 @@ const authMiddleware = async (req, res, next) => {
     "/auth/login",
     "/auth/register",
     "/error-logs",
+    "/usage/session-start",
     "/slack/callback",
     "/auth/get-loggedIn-user",
     "/upload",
@@ -14,7 +15,8 @@ const authMiddleware = async (req, res, next) => {
 
   if (
     publicRoutes.includes(req.path) ||
-    req.path.startsWith("/auth/invitation/")
+    req.path.startsWith("/auth/invitation/") ||
+    req.path.startsWith("/public/status/")
   ) {
     return next();
   }

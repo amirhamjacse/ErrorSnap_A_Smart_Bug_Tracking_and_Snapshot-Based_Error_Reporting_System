@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "ES6",
     "module": "ESNext",
     "jsx": "preserve",
     "baseUrl": "./src",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "skipLibCheck": true,
     "lib": ["ES2015", "DOM"],
     "paths": {

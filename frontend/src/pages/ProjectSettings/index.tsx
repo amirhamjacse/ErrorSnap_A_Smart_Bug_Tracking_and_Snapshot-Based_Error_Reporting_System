@@ -11,6 +11,11 @@ import ProjectSettingsIntegration from "./components/ProjectSettingsIntegration"
 import PlugIcon from "icons/PlugIcon";
 import WatchIcon from "icons/WatchIcon";
 import ProjectSettingsActivity from "./components/ProjectSettingsActivity";
+import ProjectSettingsBillingHistory from "./components/ProjectSettingsBillingHistory";
+import ProjectSettingsPurchasePlans from "./components/ProjectSettingsPurchasePlans";
+import ProjectSettingsUsageDashboard from "./components/ProjectSettingsUsageDashboard";
+import ProjectSettingsCodePatterns from "./components/ProjectSettingsCodePatterns";
+import ProjectSettingsPublicStatus from "./components/ProjectSettingsPublicStatus";
 
 const menuItems: menuItem[] = [
   {
@@ -36,6 +41,36 @@ const menuItems: menuItem[] = [
     label: "Activity",
     component: <ProjectSettingsActivity />,
     path: (projectId) => `/projects/${projectId}/settings/activity`,
+  },
+  {
+    icon: <PlugIcon fontSize={20} color="white" />,
+    label: "Code Patterns",
+    component: <ProjectSettingsCodePatterns />,
+    path: (projectId) => `/projects/${projectId}/settings/patterns`,
+  },
+  {
+    icon: <WatchIcon fontSize={20} color="white" />,
+    label: "Public Status",
+    component: <ProjectSettingsPublicStatus />,
+    path: (projectId) => `/projects/${projectId}/settings/public-status`,
+  },
+  {
+    icon: <WatchIcon fontSize={20} color="white" />,
+    label: "Billing",
+    component: <ProjectSettingsBillingHistory />,
+    path: (projectId) => `/projects/${projectId}/settings/billing`,
+  },
+  {
+    icon: <WatchIcon fontSize={20} color="white" />,
+    label: "Usage Dashboard",
+    component: <ProjectSettingsUsageDashboard />,
+    path: (projectId) => `/projects/${projectId}/settings/usage`,
+  },
+  {
+    icon: <PlugIcon fontSize={20} color="white" />,
+    label: "Purchase Plans",
+    component: <ProjectSettingsPurchasePlans />,
+    path: (projectId) => `/projects/${projectId}/settings/plans`,
   },
 ];
 
