@@ -1,6 +1,8 @@
-import { Box, Button, Grid2 as Grid, Typography } from "@mui/material";
+import { Box, Button, Grid2 as Grid, Stack, Typography } from "@mui/material";
 import ErrorBox from "./components/ErrorBox";
 import ErrorMeta from "./components/ErrorMeta";
+import ErrorAiExplanation from "./components/ErrorAiExplanation";
+import ErrorFixSuggestions from "./components/ErrorFixSuggestions";
 import PageContainer from "components/PageContainer";
 import useError from "hooks/useError";
 import { useNavigate, useParams } from "react-router-dom";
@@ -38,6 +40,10 @@ export default function ProjectErrorDetails() {
     );
   }
 
+  if (!data) {
+    return <Loader />;
+  }
+
   return (
     <>
       <PageContainer>
@@ -70,11 +76,15 @@ export default function ProjectErrorDetails() {
             <ErrorBox error={data} />
           </Grid>
           <Grid size={{ xs: 12, lg: 3 }}>
-            <ErrorMeta
-              error={data}
-              loading={isFetching}
-              update={handleUpdate}
-            />
+            <Stack spacing={2}>
+              <ErrorMeta
+                error={data}
+                loading={isFetching}
+                update={handleUpdate}
+              />
+              <ErrorAiExplanation error={data} />
+              <ErrorFixSuggestions error={data} />
+            </Stack>
           </Grid>
         </Grid>
       </PageContainer>
