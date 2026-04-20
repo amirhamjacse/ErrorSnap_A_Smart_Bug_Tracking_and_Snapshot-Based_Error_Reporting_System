@@ -6,12 +6,12 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useMutation } from "@tanstack/react-query";
-import { AxiosError } from "axios";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useProjectId from "hooks/useProjectId";
+import { key as slackDetailsKey } from "hooks/useSlackDetails";
 import SlackIcon from "icons/SlackIcon";
 import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useParams } from "react-router-dom";
 import { slackDetails } from "types/slack";
 import { apiClient } from "utils/axios";
 import { cssColor } from "utils/colors";
@@ -21,30 +21,58 @@ export default function ProjectSettingsSlackIntegrationDetails({
 }: {
   data: slackDetails;
 }) {
-  const { projectId } = useParams();
-  const inputRef = useRef();
+  const projectId = useProjectId();
+  const queryClient = useQueryClient();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [channelId, setchannelId] = useState(data?.channel_id || "");
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (data: { channelId: string; projectId: string }) => {
-      const result = await apiClient.post(`/slack/add-channel`, data);
-      return result?.data;
-    },
-  });
+  const { mutate: addChannelMutate, isPending: isAddChannelPending } =
+    useMutation({
+      mutationFn: async (data: { channelId: string; projectId: string }) => {
+        const result = await apiClient.post(`/slack/add-channel`, data);
+        return result?.data;
+      },
+    });
+  const { mutate: removeIntegrationMutate, isPending: isRemovePending } =
+    useMutation({
+      mutationFn: async (payload: { projectId: string }) => {
+        const result = await apiClient.post(`/slack/disconnect`, payload);
+        return result?.data;
+      },
+    });
+  const isPending = isAddChannelPending || isRemovePending;
 
   const handleAddChannelId = () => {
     if (!channelId) return;
 
-    mutate(
+    addChannelMutate(
       { channelId, projectId },
       {
         onSuccess: () => {
           toast.success("Channel added successfully");
         },
-        onError: (error: AxiosError<{ message: string }>) => {
-          const errorMessage = error?.response?.data?.message;
-          toast.error(errorMessage);
+        onError: () => {
+          toast.error("Failed to add channel");
         },
-      }
+      },
+    );
+  };
+
+  const removeIntegration = () => {
+    if (!projectId) return;
+
+    removeIntegrationMutate(
+      { projectId },
+      {
+        onSuccess: ({ message }) => {
+          toast.success(message || "Slack integration removed");
+          queryClient.invalidateQueries({
+            queryKey: [slackDetailsKey, projectId],
+          });
+        },
+        onError: () => {
+          toast.error("Something went wrong!");
+        },
+      },
     );
   };
 
@@ -94,6 +122,16 @@ export default function ProjectSettingsSlackIntegrationDetails({
             onClick={handleAddChannelId}
           >
             Add
+          </Button>
+        </Box>
+        <Box mt={2}>
+          <Button
+            variant="outlined"
+            color="error"
+            disabled={isPending}
+            onClick={removeIntegration}
+          >
+            Remove Slack Integration
           </Button>
         </Box>
       </Box>

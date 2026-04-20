@@ -73,7 +73,17 @@ export default function ProjectErrorDetails() {
             </Box>
           </Grid>
           <Grid size={{ xs: 12, lg: 9 }}>
-            <ErrorBox error={data} />
+            <Grid container spacing={2}>
+              <Grid size={12}>
+                <ErrorBox error={data} />
+              </Grid>
+              <Grid size={12}>
+                <ErrorAiExplanation error={data} />
+              </Grid>
+              <Grid size={12}>
+                <ErrorFixSuggestions error={data} />
+              </Grid>
+            </Grid>
           </Grid>
           <Grid size={{ xs: 12, lg: 3 }}>
             <Stack spacing={2}>
@@ -82,8 +92,6 @@ export default function ProjectErrorDetails() {
                 loading={isFetching}
                 update={handleUpdate}
               />
-              <ErrorAiExplanation error={data} />
-              <ErrorFixSuggestions error={data} />
             </Stack>
           </Grid>
         </Grid>

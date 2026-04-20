@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 
 const useProjectId = () => {
   const { projectId } = useParams();
-  return projectId;
+  return projectId as string;
 };
 
 export default useProjectId;

@@ -1,4 +1,13 @@
-import { Alert, Box, Button, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Divider,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "utils/axios";
 import { cssColor } from "utils/colors";
@@ -24,7 +33,9 @@ export default function ErrorAiExplanation({ error }: { error: errorLog }) {
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await apiClient.post(`/ai/error-explanation/${error.id}`);
+      const response = await apiClient.post(
+        `/ai/error-explanation/${error.id}`,
+      );
       return response.data?.data as AiExplanation;
     },
   });
@@ -34,7 +45,7 @@ export default function ErrorAiExplanation({ error }: { error: errorLog }) {
     try {
       const result = await mutateAsync();
       setData(result);
-    } catch (mutationError) {
+    } catch {
       setErrorMessage("Failed to generate AI explanation.");
     }
   };
@@ -49,14 +60,25 @@ export default function ErrorAiExplanation({ error }: { error: errorLog }) {
       }}
     >
       <Stack spacing={1.5}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" gap={1} flexWrap="wrap">
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          gap={1}
+          flexWrap="wrap"
+        >
           <Box>
             <Typography variant="h6">AI Error Explanation</Typography>
             <Typography variant="body2" color="text.secondary">
-              Generate a plain-language explanation using Gemini free tier when configured.
+              Generate a plain-language explanation using Gemini free tier when
+              configured.
             </Typography>
           </Box>
-          <Button variant="contained" onClick={handleGenerate} disabled={isPending}>
+          <Button
+            variant="contained"
+            onClick={handleGenerate}
+            disabled={isPending}
+          >
             {isPending ? "Generating..." : data ? "Regenerate" : "Generate"}
           </Button>
         </Box>
@@ -69,8 +91,18 @@ export default function ErrorAiExplanation({ error }: { error: errorLog }) {
           <Stack spacing={1.5}>
             <Box display="flex" gap={1} flexWrap="wrap">
               <Chip size="small" label={data.model} variant="outlined" />
-              <Chip size="small" label={`${data.confidence}% confidence`} color="primary" variant="outlined" />
-              <Chip size="small" label={data.used_fallback ? "Fallback" : "Gemini"} color={data.used_fallback ? "warning" : "success"} variant="outlined" />
+              <Chip
+                size="small"
+                label={`${data.confidence}% confidence`}
+                color="primary"
+                variant="outlined"
+              />
+              <Chip
+                size="small"
+                label={data.used_fallback ? "Fallback" : "Gemini"}
+                color={data.used_fallback ? "warning" : "success"}
+                variant="outlined"
+              />
             </Box>
 
             <Box>
@@ -107,7 +139,11 @@ export default function ErrorAiExplanation({ error }: { error: errorLog }) {
                 </Typography>
                 <Stack spacing={0.5}>
                   {data.key_signals.map((item) => (
-                    <Typography key={item} variant="body2" color="text.secondary">
+                    <Typography
+                      key={item}
+                      variant="body2"
+                      color="text.secondary"
+                    >
                       • {item}
                     </Typography>
                   ))}
@@ -122,7 +158,11 @@ export default function ErrorAiExplanation({ error }: { error: errorLog }) {
                 </Typography>
                 <Stack spacing={0.5}>
                   {data.fix_steps.map((item) => (
-                    <Typography key={item} variant="body2" color="text.secondary">
+                    <Typography
+                      key={item}
+                      variant="body2"
+                      color="text.secondary"
+                    >
                       • {item}
                     </Typography>
                   ))}
@@ -137,7 +177,11 @@ export default function ErrorAiExplanation({ error }: { error: errorLog }) {
                 </Typography>
                 <Stack spacing={0.5}>
                   {data.what_to_check.map((item) => (
-                    <Typography key={item} variant="body2" color="text.secondary">
+                    <Typography
+                      key={item}
+                      variant="body2"
+                      color="text.secondary"
+                    >
                       • {item}
                     </Typography>
                   ))}
