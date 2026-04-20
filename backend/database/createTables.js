@@ -8,7 +8,6 @@ import createSourcemapHistoryTable from "../tables/sourcemapHistory.js";
 import createProjectInvitationLinkTable from "../tables/projectInvitationLink.js";
 import createAuditLogsTable from "../auditLogs/table.js";
 import createProjectApiKeysTable from "../apiKeys/table.js";
-import createBillingTables from "../billing/table.js";
 
 con.connect(function (error) {
   if (error) {
@@ -27,5 +26,4 @@ con.connect(function (error) {
   createProjectInvitationLinkTable();
   createAuditLogsTable();
   createProjectApiKeysTable();
-  createBillingTables();
 });

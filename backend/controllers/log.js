@@ -11,7 +11,6 @@ import ProjectTeam from "../classes/projectTeam.js";
 import AuditLog from "../auditLogs/auditLog.js";
 import { normalizeEnvironment } from "../utils/environment.js";
 import ProjectApiKey from "../apiKeys/projectApiKey.js";
-import UsageMeter from "../billing/usageMeter.js";
 
 async function resolveOriginalPosition({
   source,
@@ -140,8 +139,6 @@ export const sendProjectError = async (req, res) => {
   const duplicateError = await Errorlog.duplicateError(values);
   if (duplicateError) {
     await Errorlog.updateErrorTime(duplicateError?.id);
-    await UsageMeter.incrementMetric(effectiveProjectId, "api_calls");
-    await UsageMeter.incrementMetric(effectiveProjectId, "errors_logged");
     return res.status(201).json({ message: "Error updated successfully" });
   }
 
@@ -152,9 +149,6 @@ export const sendProjectError = async (req, res) => {
     await Project.update(effectiveProjectId, {
       last_error_at: currentDate,
     });
-
-    await UsageMeter.incrementMetric(effectiveProjectId, "api_calls");
-    await UsageMeter.incrementMetric(effectiveProjectId, "errors_logged");
 
     res
       .status(201)

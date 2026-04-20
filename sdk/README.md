@@ -30,7 +30,7 @@ The SDK now sends the API key with each error report so the backend can authenti
 
 `environment` is optional. If omitted, the SDK defaults to `production`.
 
-The SDK also records a session start event on initialization. This powers usage-based billing metrics (errors logged, sessions recorded, and API calls).
+The SDK also records a session start event on initialization for usage analytics.
 
 And you are good to go :)
 
