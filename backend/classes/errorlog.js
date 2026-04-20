@@ -2,12 +2,13 @@ import { con } from "../database/connection.js";
 import { getCurrentDateTime } from "../utils/date.js";
 import User from "./user.js";
 import { v2 as cloudinary } from "cloudinary";
+import { normalizeEnvironment } from "../utils/environment.js";
 
 export default class Errorlog {
   static table = "errorlogs";
 
   static getFilterQuery(projectId, filters = {}) {
-    const { query, status } = filters;
+    const { query, status, environment } = filters;
     let whereSql = `WHERE project_id = ?`;
     const whereParams = [projectId];
 
@@ -19,6 +20,11 @@ export default class Errorlog {
     if (typeof status !== "undefined" && status !== "") {
       whereSql += ` AND status = ?`;
       whereParams.push(Number(status));
+    }
+
+    if (environment) {
+      whereSql += ` AND environment = ?`;
+      whereParams.push(normalizeEnvironment(environment));
     }
 
     return {
@@ -48,9 +54,19 @@ export default class Errorlog {
   }
 
   static duplicateError(values) {
-    const { message, project_id, source, lineno, colno, os, browser, status } =
+    const {
+      message,
+      project_id,
+      source,
+      lineno,
+      colno,
+      os,
+      browser,
+      status,
+      environment,
+    } =
       values;
-    let sql = `SELECT * FROM ${Errorlog.table} WHERE source = ? AND lineno = ? AND colno = ? AND project_id = ? AND browser = ? AND message = ? AND status = ? AND os = ?`;
+    let sql = `SELECT * FROM ${Errorlog.table} WHERE source = ? AND lineno = ? AND colno = ? AND project_id = ? AND browser = ? AND message = ? AND status = ? AND os = ? AND environment = ?`;
     const params = [
       source,
       lineno,
@@ -60,6 +76,7 @@ export default class Errorlog {
       message,
       status,
       os,
+      normalizeEnvironment(environment),
     ];
 
     return new Promise((resolve, reject) => {
@@ -106,10 +123,18 @@ export default class Errorlog {
   }
 
   static selectByProjectId(projectId, filters = {}) {
-    const { orderBy = "DESC", query, status, page = 1, limit = 10 } = filters;
+    const {
+      orderBy = "DESC",
+      query,
+      status,
+      environment,
+      page = 1,
+      limit = 10,
+    } = filters;
     const { whereSql, whereParams } = Errorlog.getFilterQuery(projectId, {
       query,
       status,
+      environment,
     });
 
     const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
@@ -151,10 +176,11 @@ export default class Errorlog {
   }
 
   static selectByProjectIdForExport(projectId, filters = {}) {
-    const { orderBy = "DESC", query, status, page, limit } = filters;
+    const { orderBy = "DESC", query, status, environment, page, limit } = filters;
     const { whereSql, whereParams } = Errorlog.getFilterQuery(projectId, {
       query,
       status,
+      environment,
     });
     const sortOrder = String(orderBy).toUpperCase() === "ASC" ? "ASC" : "DESC";
     const hasPagination =
@@ -231,12 +257,20 @@ export default class Errorlog {
     });
   }
 
-  static assigned() {
+  static assigned(filters = {}) {
     const userId = User.currentUser?.id;
-    const sql = `SELECT * FROM ${Errorlog.table} WHERE assignee_id = ? AND status = 1`;
+    const whereSql = [`assignee_id = ?`, `status = 1`];
+    const params = [userId];
+
+    if (filters?.environment) {
+      whereSql.push(`environment = ?`);
+      params.push(normalizeEnvironment(filters.environment));
+    }
+
+    const sql = `SELECT * FROM ${Errorlog.table} WHERE ${whereSql.join(" AND ")}`;
 
     return new Promise((resolve, reject) => {
-      con.query(sql, [userId], (err, results) => {
+      con.query(sql, params, (err, results) => {
         if (err) {
           console.error("Error executing query:", err);
           return reject(err);

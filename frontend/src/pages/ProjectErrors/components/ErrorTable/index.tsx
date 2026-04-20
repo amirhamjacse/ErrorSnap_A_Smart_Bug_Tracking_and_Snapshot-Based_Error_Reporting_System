@@ -1,5 +1,6 @@
 import {
   Box,
+  Chip,
   MenuItem,
   Pagination,
   Paper,
@@ -21,10 +22,15 @@ import { getBrowserIcon } from "utils/icon";
 import useErrors from "hooks/useErrors";
 import useFilterChange from "hooks/useFilterChange";
 import useProjectId from "hooks/useProjectId";
+import {
+  environmentColorMap,
+  normalizeEnvironmentLabel,
+} from "types/environment";
 
 export default function ErrorTable() {
   const { value: status } = useFilterChange("status", 0);
   const { value: query } = useFilterChange("query", "");
+  const { value: environment } = useFilterChange("environment", "");
   const { value: page, handleChange: handlePageChange } = useFilterChange(
     "page",
     1,
@@ -44,6 +50,7 @@ export default function ErrorTable() {
     projectId,
     query,
     status,
+    environment: String(environment),
     page,
     limit,
   });
@@ -80,6 +87,7 @@ export default function ErrorTable() {
               <TableCell>Id</TableCell>
               <TableCell>Details</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Environment</TableCell>
               <TableCell>OS</TableCell>
               <TableCell>Browser</TableCell>
               <TableCell>First seen</TableCell>
@@ -106,6 +114,14 @@ export default function ErrorTable() {
                   </Link>
                 </TableCell>
                 <TableCell>{errorStatus[error?.status]}</TableCell>
+                <TableCell>
+                  <Chip
+                    size="small"
+                    label={normalizeEnvironmentLabel(error?.environment)}
+                    color={environmentColorMap[error?.environment] || "default"}
+                    variant="outlined"
+                  />
+                </TableCell>
                 <TableCell>{error?.os}</TableCell>
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>

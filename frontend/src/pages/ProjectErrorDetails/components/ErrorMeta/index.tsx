@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Chip, Typography } from "@mui/material";
 import { format } from "date-fns";
 import { errorLog, errorLogStatus } from "types/errorLog";
 import { cssColor } from "utils/colors";
@@ -10,6 +10,10 @@ import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "utils/axios";
 import CheckIcon from "icons/CheckIcon";
 import Copy from "components/Copy";
+import {
+  environmentColorMap,
+  normalizeEnvironmentLabel,
+} from "types/environment";
 
 interface ErrorMetaProps {
   error: errorLog;
@@ -65,6 +69,16 @@ export default function ErrorMeta({ error, loading, update }: ErrorMetaProps) {
         <Typography variant="body1" mb={2}>
           {error?.os}
         </Typography>
+
+        <Typography variant="body2">Environment</Typography>
+        <Box mb={2}>
+          <Chip
+            size="small"
+            label={normalizeEnvironmentLabel(error?.environment)}
+            color={environmentColorMap[error?.environment] || "default"}
+            variant="outlined"
+          />
+        </Box>
 
         <Assignee
           loading={loading}

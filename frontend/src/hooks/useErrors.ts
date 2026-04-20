@@ -8,6 +8,7 @@ type errorFilters = {
   projectId: string;
   query?: string | number;
   status?: string | number;
+  environment?: string;
   page?: string | number;
   limit?: string | number;
 };
@@ -24,6 +25,7 @@ const useErrors = (
 ) => {
   const query = filters?.query || "";
   const status = filters?.status || 0;
+  const environment = filters?.environment || "";
   const page = Number(filters?.page) > 0 ? Number(filters?.page) : 1;
   const limit = Number(filters?.limit) > 0 ? Number(filters?.limit) : 10;
 
@@ -31,7 +33,7 @@ const useErrors = (
     queryKey: [key, JSON.stringify(filters)],
     queryFn: async (): Promise<errorLogsResponse> => {
       const response = await apiClient.get(
-        `/error-logs/${filters?.projectId}?query=${query}&status=${status}&page=${page}&limit=${limit}`
+        `/error-logs/${filters?.projectId}?query=${query}&status=${status}&environment=${environment}&page=${page}&limit=${limit}`
       );
       return {
         data: response.data?.data || [],

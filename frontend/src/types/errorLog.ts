@@ -8,6 +8,7 @@ export type errorLog = {
   stack: string;
   os: string;
   browser: string;
+  environment: string;
   status: errorLogStatus;
   created_at: string;
   assignee_id: number;

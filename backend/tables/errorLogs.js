@@ -1,4 +1,5 @@
 import executeTableQuery from "../utils/executeTableQuery.js";
+import { con } from "../database/connection.js";
 
 export default function createErrorLogsTable() {
   const createTableQuery = `CREATE TABLE IF NOT EXISTS ${process.env.DB_NAME}.errorlogs (
@@ -11,6 +12,7 @@ export default function createErrorLogsTable() {
     stack LONGTEXT NOT NULL , 
     browser VARCHAR(20) NOT NULL ,
     os VARCHAR(20) NOT NULL,
+    environment VARCHAR(20) NOT NULL DEFAULT 'production',
     image VARCHAR(255) NULL DEFAULT NULL,
     status TINYINT NOT NULL COMMENT '0 = unresolved; 1 = pending; 2 = resolved',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
@@ -19,4 +21,14 @@ export default function createErrorLogsTable() {
     )`;
 
   executeTableQuery(createTableQuery, "errorlogs");
+
+  // Ensure existing installations gain environment segmentation.
+  con.query(
+    `ALTER TABLE ${process.env.DB_NAME}.errorlogs ADD COLUMN IF NOT EXISTS environment VARCHAR(20) NOT NULL DEFAULT 'production' AFTER os`,
+    function (error) {
+      if (error) {
+        console.log("Error adding environment column to errorlogs", error);
+      }
+    }
+  );
 }

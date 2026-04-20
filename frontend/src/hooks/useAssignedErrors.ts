@@ -5,13 +5,18 @@ import { apiClient } from "utils/axios";
 export const key = "assigned-error";
 
 const useAssignedErrors = (
+  environment?: string,
   initialized = true,
   options?: Partial<UseQueryOptions<errorLog[]>>
 ) => {
   const data = useQuery({
-    queryKey: [key],
+    queryKey: [key, environment],
     queryFn: async (): Promise<errorLog[]> => {
-      const response = await apiClient.get(`/assigned-errors`);
+      const response = await apiClient.get(`/assigned-errors`, {
+        params: {
+          environment,
+        },
+      });
       return response.data?.data;
     },
     enabled: initialized,

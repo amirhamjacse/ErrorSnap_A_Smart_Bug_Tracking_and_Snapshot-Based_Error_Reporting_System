@@ -1,5 +1,7 @@
 import {
   Box,
+  Chip,
+  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -7,6 +9,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from "@mui/material";
 import ListContainer from "components/ListContainer";
@@ -14,16 +17,46 @@ import PageContainer from "components/PageContainer";
 import useAssignedErrors from "hooks/useAssignedErrors";
 import React from "react";
 import { Link } from "react-router-dom";
+import useFilterChange from "hooks/useFilterChange";
+import {
+  environmentColorMap,
+  environmentOptions,
+  normalizeEnvironmentLabel,
+} from "types/environment";
 import { cssColor } from "utils/colors";
 import { getBrowserIcon } from "utils/icon";
 import { getTimeAgo } from "utils/time";
 
 export default function AssignedErrors() {
-  const { data, isLoading, error } = useAssignedErrors();
+  const { value: environment, handleChange: handleEnvironmentChange } =
+    useFilterChange("environment", "");
+  const { data, isLoading, error } = useAssignedErrors(String(environment));
 
   return (
     <PageContainer>
-      <Typography variant="h6">All assigned errors</Typography>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={2}
+      >
+        <Typography variant="h6">All assigned errors</Typography>
+        <TextField
+          select
+          size="small"
+          label="Environment"
+          value={environment}
+          onChange={(e) => handleEnvironmentChange(e.target.value)}
+          sx={{ minWidth: 170 }}
+        >
+          {environmentOptions.map((item) => (
+            <MenuItem key={item.value || "all"} value={item.value}>
+              {item.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
       <ListContainer
         count={data?.length}
         loading={isLoading}
@@ -41,6 +74,7 @@ export default function AssignedErrors() {
               <TableRow>
                 <TableCell>Details</TableCell>
                 <TableCell>OS</TableCell>
+                <TableCell>Environment</TableCell>
                 <TableCell>Browser</TableCell>
                 <TableCell>First seen</TableCell>
               </TableRow>
@@ -64,6 +98,14 @@ export default function AssignedErrors() {
                     </Link>
                   </TableCell>
                   <TableCell>{error?.os}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={normalizeEnvironmentLabel(error?.environment)}
+                      color={environmentColorMap[error?.environment] || "default"}
+                      variant="outlined"
+                    />
+                  </TableCell>
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={1}>
                       {getBrowserIcon(error?.browser)} {error?.browser}

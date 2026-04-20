@@ -8,10 +8,13 @@ import {
 import useFilterChange from "hooks/useFilterChange";
 import useFilterChangeInput from "hooks/useFilterChangeInput";
 import SearchIcon from "icons/SearchIcon";
+import { environmentOptions } from "types/environment";
 import { cssColor } from "utils/colors";
 
 export default function ErrorFilters() {
   const { value, handleChange } = useFilterChange("status", 0);
+  const { value: environment, handleChange: handleEnvironmentChange } =
+    useFilterChange("environment", "");
   const { handleChange: handlePageChange } = useFilterChange("page", 1);
   const { value: queryValue, handleChange: handleChangeQuery } =
     useFilterChangeInput("query", "", 300, () => handlePageChange(1));
@@ -29,7 +32,7 @@ export default function ErrorFilters() {
       }}
     >
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 9, md: 10 }}>
+        <Grid size={{ xs: 12, sm: 7, md: 8 }}>
           <TextField
             value={queryValue}
             onChange={handleChangeQuery}
@@ -48,7 +51,7 @@ export default function ErrorFilters() {
             fullWidth
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 3, md: 2 }}>
+        <Grid size={{ xs: 12, sm: 2.5, md: 2 }}>
           <TextField
             fullWidth
             select
@@ -65,6 +68,30 @@ export default function ErrorFilters() {
             <MenuItem value={0}>Unresolve</MenuItem>
             <MenuItem value={1}>Pending</MenuItem>
             <MenuItem value={2}>Resolved</MenuItem>
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 2.5, md: 2 }}>
+          <TextField
+            fullWidth
+            select
+            size="small"
+            sx={{
+              ".MuiOutlinedInput-notchedOutline": {
+                borderColor: cssColor("divider"),
+              },
+            }}
+            value={environment}
+            label="Environment"
+            onChange={(e) => {
+              handleEnvironmentChange(e.target.value);
+              handlePageChange(1);
+            }}
+          >
+            {environmentOptions.map((item) => (
+              <MenuItem key={item.value || "all"} value={item.value}>
+                {item.label}
+              </MenuItem>
+            ))}
           </TextField>
         </Grid>
       </Grid>
