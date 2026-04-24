@@ -24,11 +24,33 @@ export default function createErrorLogsTable() {
 
   // Ensure existing installations gain environment segmentation.
   con.query(
-    `ALTER TABLE ${process.env.DB_NAME}.errorlogs ADD COLUMN IF NOT EXISTS environment VARCHAR(20) NOT NULL DEFAULT 'production' AFTER os`,
-    function (error) {
+    `SELECT 1 FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = ?
+       AND TABLE_NAME = ?
+       AND COLUMN_NAME = ?
+     LIMIT 1`,
+    [process.env.DB_NAME, "errorlogs", "environment"],
+    function (error, results) {
       if (error) {
-        console.log("Error adding environment column to errorlogs", error);
+        console.log("Error checking environment column on errorlogs", error);
+        return;
       }
-    }
+
+      if (results?.length) {
+        return;
+      }
+
+      con.query(
+        `ALTER TABLE ${process.env.DB_NAME}.errorlogs ADD COLUMN environment VARCHAR(20) NOT NULL DEFAULT 'production' AFTER os`,
+        function (alterError) {
+          if (alterError) {
+            console.log(
+              "Error adding environment column to errorlogs",
+              alterError,
+            );
+          }
+        },
+      );
+    },
   );
 }
