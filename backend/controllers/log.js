@@ -11,7 +11,6 @@ import { getCurrentDateTime } from "../utils/date.js";
 import ProjectTeam from "../classes/projectTeam.js";
 import AuditLog from "../auditLogs/auditLog.js";
 import { normalizeEnvironment } from "../utils/environment.js";
-import ProjectApiKey from "../apiKeys/projectApiKey.js";
 
 async function resolveOriginalPosition({
   source,
@@ -67,7 +66,6 @@ export const sendProjectError = async (req, res) => {
   const {
     message,
     projectId,
-    apiKey,
     source,
     lineno,
     colno,
@@ -80,32 +78,20 @@ export const sendProjectError = async (req, res) => {
   } = req.body;
 
   if (type === "unhandledrejection") {
-    if (!projectId && !apiKey) {
+    if (!projectId) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-  } else if (!message || (!projectId && !apiKey) || !source || !stack) {
+  } else if (!message || !projectId || !source || !stack) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  // check if project exists
-  let project = null;
-
-  if (apiKey) {
-    const apiKeyResult = await ProjectApiKey.consume(apiKey);
-    if (!apiKeyResult.ok) {
-      return res.status(apiKeyResult.status).json({ message: apiKeyResult.message });
-    }
-
-    project = await Project.getById(apiKeyResult.projectId);
-  } else {
-    project = await Project.getById(projectId);
-  }
+  const project = await Project.getById(projectId);
 
   if (!project) {
     return res.status(400).json({ message: "Project not exists!" });
   }
 
-  const effectiveProjectId = project?.id || projectId;
+  const effectiveProjectId = project.id;
 
   const errorId = nanoid(8);
 

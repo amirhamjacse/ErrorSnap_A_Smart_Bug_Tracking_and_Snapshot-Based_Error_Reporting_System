@@ -2,7 +2,6 @@ import { Box, Button, Grid2 as Grid, Stack, Typography } from "@mui/material";
 import ErrorBox from "./components/ErrorBox";
 import ErrorMeta from "./components/ErrorMeta";
 import ErrorAiExplanation from "./components/ErrorAiExplanation";
-import ErrorFixSuggestions from "./components/ErrorFixSuggestions";
 import PageContainer from "components/PageContainer";
 import useError from "hooks/useError";
 import { useNavigate, useParams } from "react-router-dom";
@@ -79,9 +78,6 @@ export default function ProjectErrorDetails() {
               </Grid>
               <Grid size={12}>
                 <ErrorAiExplanation error={data} />
-              </Grid>
-              <Grid size={12}>
-                <ErrorFixSuggestions error={data} />
               </Grid>
             </Grid>
           </Grid>

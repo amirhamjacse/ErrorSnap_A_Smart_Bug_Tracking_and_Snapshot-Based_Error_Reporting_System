@@ -26,8 +26,7 @@ export default function UsageGuide() {
       </Typography>
 
       <Typography color="text.secondary" sx={{ mt: 1 }}>
-        Generate a project API key from Project Settings &gt; Integration and
-        pass it to the SDK config as <b>apiKey</b>.
+        Use your project API key and pass it to the SDK config as <b>apiKey</b>.
       </Typography>
 
       <Copy

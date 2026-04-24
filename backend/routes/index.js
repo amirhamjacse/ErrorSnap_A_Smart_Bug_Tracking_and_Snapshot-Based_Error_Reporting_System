@@ -46,19 +46,9 @@ import {
 import { upload, uploadSourceMaps } from "../controllers/sourcemaps.js";
 import { getAllHistory } from "../controllers/sourcemapHistory.js";
 import { getProjectAuditLogs } from "../auditLogs/controller.js";
-import {
-  createProjectApiKey,
-  getProjectApiKeys,
-  revokeProjectApiKey,
-} from "../apiKeys/controller.js";
 import { recordSessionStart } from "../controllers/usage.js";
-import {
-  getErrorPatterns,
-  getPatternDetails,
-} from "../controllers/pattern.js";
 import { getPublicProjectStatus } from "../controllers/publicStatus.js";
-import { getErrorExplanation } from "../controllers/ai.js";
-import { getFixSuggestions } from "../controllers/fix.js";
+import { getErrorAnalysis } from "../controllers/ai.js";
 import {
   exportErrorsCsv,
   exportErrorsJson,
@@ -106,19 +96,12 @@ router.get("/discord/details/:projectId", getConnectedDiscordDetails);
 router.post("/discord/connect", connectDiscordIntegration);
 router.post("/discord/disconnect", removeDiscordIntegration);
 router.get("/audit-logs/:projectId", getProjectAuditLogs);
-router.get("/project-api-keys/:projectId", getProjectApiKeys);
-router.post("/project-api-keys", createProjectApiKey);
-router.post("/project-api-keys/:keyId/revoke", revokeProjectApiKey);
 
 // Keep session tracking enabled for SDK compatibility.
 router.post("/usage/session-start", recordSessionStart);
 
-// pattern detection
-router.get("/patterns/:projectId", getErrorPatterns);
-router.get("/patterns/:projectId/details", getPatternDetails);
 router.get("/public/status/:projectId", getPublicProjectStatus);
-router.post("/ai/error-explanation/:errorId", getErrorExplanation);
-router.post("/fix/suggest/:errorId", getFixSuggestions);
+router.get("/ai/analysis/:errorId", getErrorAnalysis);
 
 // export
 router.post("/export/:projectId/csv", exportErrorsCsv);

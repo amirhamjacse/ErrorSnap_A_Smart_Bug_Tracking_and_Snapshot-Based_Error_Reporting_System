@@ -2,48 +2,85 @@ import Project from "../classes/project.js";
 import ProjectTeam from "../classes/projectTeam.js";
 import Errorlog from "../classes/errorlog.js";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const GEMINI_MODEL = "models/gemini-2.5-flash";
+const GEMINI_API_BASES = ["https://generativelanguage.googleapis.com/v1beta"];
+const GEMINI_MODEL_CANDIDATES = [
+  "models/gemini-2.5-flash",
+  "models/gemini-2.5-pro",
+  "models/gemini-2.0-flash",
+  "models/gemini-2.0-flash-001",
+];
 
-function fallbackAnalysis(error) {
-  const stack = String(error?.stack || "");
-  const message = String(error?.message || "Unknown error");
-  const source = error?.source || "Unknown source";
-  const browser = error?.browser || "Unknown browser";
-  const os = error?.os || "Unknown OS";
+let cachedGeminiBase = "";
+let cachedGeminiModel = "";
 
-  const likelyCause =
-    stack.toLowerCase().includes("cannot read") ||
-    stack.toLowerCase().includes("undefined")
-      ? "The code is likely reading a value before it exists or accessing a missing property."
-      : stack.toLowerCase().includes("network")
-      ? "The request or API call may be failing because the backend, URL, or CORS configuration is unavailable."
-      : "The error appears to come from a runtime exception in the referenced source file.";
+function normalizeModelName(model) {
+  return String(model || "")
+    .trim()
+    .replace(/^models\//, "");
+}
+
+function buildModelCandidates() {
+  const ordered = [];
+  const seen = new Set();
+
+  if (cachedGeminiModel) {
+    ordered.push(cachedGeminiModel);
+    seen.add(cachedGeminiModel);
+  }
+
+  for (const candidate of GEMINI_MODEL_CANDIDATES) {
+    const normalized = normalizeModelName(candidate);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+
+    seen.add(normalized);
+    ordered.push(normalized);
+  }
+
+  return ordered;
+}
+
+function shouldTryNextModel(status, bodyText) {
+  if (status === 404 || status === 429 || status === 503) {
+    return true;
+  }
+
+  const text = String(bodyText || "").toLowerCase();
+  return (
+    text.includes("resource exhausted") ||
+    text.includes("rate limit") ||
+    text.includes("quota") ||
+    text.includes("busy") ||
+    text.includes("temporarily unavailable")
+  );
+}
+
+async function callGemini({ apiBase, model, prompt, apiKey }) {
+  const response = await fetch(
+    `${apiBase}/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          responseMimeType: "application/json",
+        },
+      }),
+    },
+  );
+
+  const bodyText = await response.text();
 
   return {
-    model: "heuristic-fallback",
-    used_fallback: true,
-    generated_at: new Date().toISOString(),
-    summary: `This error is happening in ${source} on ${browser} / ${os}.`,
-    likely_cause: likelyCause,
-    explanation: `The reported message is "${message}". Review the stack trace and the code at ${source} near line ${error?.lineno || "unknown"} and column ${error?.colno || "unknown"}.`,
-    confidence: 55,
-    key_signals: [
-      `Browser: ${browser}`,
-      `OS: ${os}`,
-      `Environment: ${error?.environment || "production"}`,
-      `Source: ${source}`,
-    ],
-    fix_steps: [
-      "Inspect the exact code path referenced in the stack trace.",
-      "Check for null, undefined, or missing async data before use.",
-      "Reproduce the issue with the same browser and environment.",
-      "Verify the deployment or API response if the error is network-related.",
-    ],
-    what_to_check: [
-      `Line ${error?.lineno || "unknown"} and column ${error?.colno || "unknown"} in ${source}`,
-      "Recent code changes in the same file or feature area",
-      "Whether a dependency or API response changed recently",
-    ],
+    ok: response.ok,
+    status: response.status,
+    bodyText,
   };
 }
 
@@ -58,12 +95,21 @@ function extractJsonText(text) {
   return block?.[0]?.trim() || trimmed;
 }
 
+function parseJsonSafely(text, label) {
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`Gemini returned invalid JSON in ${label}`);
+  }
+}
+
 async function generateGeminiExplanation(error) {
-  if (!process.env.GEMINI_API_KEY) {
-    return fallbackAnalysis(error);
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("Gemini API key is not configured");
   }
 
-  const prompt = `You are a senior software engineer explaining a runtime error to a developer.
+  const prompt = `You are a senior software engineer analyzing a runtime error.
 Return JSON only with these keys:
 {
   "summary": string,
@@ -71,8 +117,16 @@ Return JSON only with these keys:
   "explanation": string,
   "confidence": number,
   "key_signals": string[],
-  "fix_steps": string[],
-  "what_to_check": string[]
+  "what_to_check": string[],
+  "suggested_fixes": [
+    {
+      "title": string,
+      "description": string,
+      "risk_level": "low" | "medium" | "high",
+      "implementation_steps": string[],
+      "code_snippet": string
+    }
+  ]
 }
 Keep it concise and specific.
 
@@ -84,54 +138,98 @@ Error details:
 - Browser: ${error?.browser || "Unknown"}
 - OS: ${error?.os || "Unknown"}
 - Environment: ${error?.environment || "production"}
-- Stack: ${error?.stack || "No stack available"}
+- Stack: ${(error?.stack || "").slice(0, 5000)}
 `;
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: "application/json",
-          },
-        }),
-      }
-    );
+  const modelCandidates = buildModelCandidates();
+  const baseCandidates = [...GEMINI_API_BASES];
 
-    if (!response.ok) {
-      throw new Error(`Gemini request failed with status ${response.status}`);
-    }
-
-    const payload = await response.json();
-    const contentText = payload?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const parsed = JSON.parse(extractJsonText(contentText));
-    const fallback = fallbackAnalysis(error);
-
-    return {
-      model: GEMINI_MODEL,
-      used_fallback: false,
-      generated_at: new Date().toISOString(),
-      summary: parsed.summary || fallback.summary,
-      likely_cause: parsed.likely_cause || fallback.likely_cause,
-      explanation: parsed.explanation || fallback.explanation,
-      confidence: Number(parsed.confidence) || 70,
-      key_signals: Array.isArray(parsed.key_signals) ? parsed.key_signals : fallback.key_signals,
-      fix_steps: Array.isArray(parsed.fix_steps) ? parsed.fix_steps : fallback.fix_steps,
-      what_to_check: Array.isArray(parsed.what_to_check) ? parsed.what_to_check : fallback.what_to_check,
-    };
-  } catch (error) {
-    return fallbackAnalysis(error);
+  if (cachedGeminiBase) {
+    baseCandidates.unshift(cachedGeminiBase);
   }
+
+  let lastNon404Failure = "";
+
+  for (const apiBase of baseCandidates) {
+    for (const model of modelCandidates) {
+      const result = await callGemini({ apiBase, model, prompt, apiKey });
+
+      if (!result.ok) {
+        console.error("Gemini error:", {
+          apiBase,
+          model,
+          status: result.status,
+          body: result.bodyText,
+        });
+      }
+
+      if (result.ok) {
+        cachedGeminiBase = apiBase;
+        cachedGeminiModel = model;
+
+        const payload = parseJsonSafely(result.bodyText || "{}", "response body");
+        const contentText =
+          payload?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+        if (!contentText) {
+          throw new Error("Gemini returned an empty response");
+        }
+
+        const parsed = parseJsonSafely(
+          extractJsonText(contentText),
+          "model content",
+        );
+        const suggestedFixes = Array.isArray(parsed.suggested_fixes)
+          ? parsed.suggested_fixes
+              .filter((fix) => fix && typeof fix === "object")
+              .map((fix) => ({
+                title: String(fix.title || "Untitled fix"),
+                description: String(fix.description || ""),
+                risk_level:
+                  fix.risk_level === "high" || fix.risk_level === "medium"
+                    ? fix.risk_level
+                    : "low",
+                implementation_steps: Array.isArray(fix.implementation_steps)
+                  ? fix.implementation_steps.map((step) => String(step))
+                  : [],
+                code_snippet: String(fix.code_snippet || ""),
+              }))
+          : [];
+
+        return {
+          model,
+          generated_at: new Date().toISOString(),
+          summary: String(parsed.summary || ""),
+          likely_cause: String(parsed.likely_cause || ""),
+          explanation: String(parsed.explanation || ""),
+          confidence: Number(parsed.confidence) || 0,
+          key_signals: Array.isArray(parsed.key_signals)
+            ? parsed.key_signals.map((signal) => String(signal))
+            : [],
+          what_to_check: Array.isArray(parsed.what_to_check)
+            ? parsed.what_to_check.map((item) => String(item))
+            : [],
+          suggested_fixes: suggestedFixes,
+        };
+      }
+
+      if (!shouldTryNextModel(result.status, result.bodyText)) {
+        lastNon404Failure = `status=${result.status}`;
+        break;
+      }
+    }
+  }
+
+  if (lastNon404Failure) {
+    throw new Error(`Gemini request failed (${lastNon404Failure})`);
+  }
+
+  throw new Error(
+    `Gemini model not available. Tried: ${modelCandidates.join(", ")}`,
+  );
 }
 
-export const getErrorExplanation = async (req, res) => {
+export const getErrorAnalysis = async (req, res) => {
   try {
     const { errorId } = req.params;
 
@@ -146,7 +244,7 @@ export const getErrorExplanation = async (req, res) => {
 
     const team = await ProjectTeam.selectByProjectIdUserId(
       error.project_id,
-      req.errorsnapUser?.id
+      req.errorsnapUser?.id,
     );
 
     if (!team) {
@@ -158,7 +256,16 @@ export const getErrorExplanation = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    const analysis = await generateGeminiExplanation(error);
+    let analysis = null;
+
+    try {
+      analysis = await generateGeminiExplanation(error);
+    } catch (analysisError) {
+      console.error("Error generating analysis:", analysisError);
+      return res
+        .status(500)
+        .json({ message: "Failed to generate error analysis" });
+    }
 
     return res.status(200).json({
       message: "",
@@ -172,7 +279,9 @@ export const getErrorExplanation = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error generating explanation:", error);
-    return res.status(500).json({ message: "Failed to generate explanation" });
+    console.error("Error preparing analysis request:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to generate error analysis" });
   }
 };

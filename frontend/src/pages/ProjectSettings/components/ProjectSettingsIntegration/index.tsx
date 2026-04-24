@@ -9,7 +9,6 @@ import ProjectSettingsSlackIntegrationAdd from "./components/ProjectSettingsSlac
 import ProjectSettingsSlackIntegrationDetails from "./components/ProjectSettingsSlackIntegrationDetails";
 import { cssColor } from "utils/colors";
 import UsageGuide from "pages/Projects/components/UsageGuide";
-import ProjectSettingsApiKeys from "./components/ProjectSettingsApiKeys";
 
 export default function ProjectSettingsIntegration() {
   const { projectId } = useParams();
@@ -51,9 +50,6 @@ export default function ProjectSettingsIntegration() {
       <Grid2 container spacing={2}>
         <Grid2 size={12}>
           <UsageGuide />
-        </Grid2>
-        <Grid2 size={12}>
-          <ProjectSettingsApiKeys />
         </Grid2>
         <Grid2 size={12}>
           {slackData ? (

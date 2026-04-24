@@ -11,7 +11,6 @@ import ProjectSettingsIntegration from "./components/ProjectSettingsIntegration"
 import PlugIcon from "icons/PlugIcon";
 import WatchIcon from "icons/WatchIcon";
 import ProjectSettingsActivity from "./components/ProjectSettingsActivity";
-import ProjectSettingsCodePatterns from "./components/ProjectSettingsCodePatterns";
 import ProjectSettingsPublicStatus from "./components/ProjectSettingsPublicStatus";
 
 const menuItems: menuItem[] = [
@@ -38,12 +37,6 @@ const menuItems: menuItem[] = [
     label: "Activity",
     component: <ProjectSettingsActivity />,
     path: (projectId) => `/projects/${projectId}/settings/activity`,
-  },
-  {
-    icon: <PlugIcon fontSize={20} color="white" />,
-    label: "Code Patterns",
-    component: <ProjectSettingsCodePatterns />,
-    path: (projectId) => `/projects/${projectId}/settings/patterns`,
   },
   {
     icon: <WatchIcon fontSize={20} color="white" />,

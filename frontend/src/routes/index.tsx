@@ -48,10 +48,6 @@ const routesConfig = [
         element: <ProjectSettings />,
       },
       {
-        path: "/projects/:projectId/settings/patterns",
-        element: <ProjectSettings />,
-      },
-      {
         path: "/projects/:projectId/settings/public-status",
         element: <ProjectSettings />,
       },
