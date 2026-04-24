@@ -28,7 +28,7 @@ import {
 } from "types/environment";
 
 export default function ErrorTable() {
-  const { value: status } = useFilterChange("status", 0);
+  const { value: status } = useFilterChange("status", "active");
   const { value: query } = useFilterChange("query", "");
   const { value: environment } = useFilterChange("environment", "");
   const { value: page, handleChange: handlePageChange } = useFilterChange(
@@ -129,7 +129,12 @@ export default function ErrorTable() {
                   </Box>
                 </TableCell>
                 <TableCell>{getTimeAgo(error?.created_at)}</TableCell>
-                <TableCell>{error?.assignee_id}</TableCell>
+                <TableCell>
+                  {error?.assignee_username ||
+                    error?.assignee_email ||
+                    error?.assignee_id ||
+                    "-"}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -15,7 +15,7 @@ export default function ProjectErrorCount({
     error,
   } = useErrors({
     projectId,
-    status: errorStatus.Unresolved,
+    status: "active",
   });
 
   if (error) {

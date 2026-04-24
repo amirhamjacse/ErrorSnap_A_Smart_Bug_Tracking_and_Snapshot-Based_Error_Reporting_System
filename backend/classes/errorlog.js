@@ -7,23 +7,31 @@ import { normalizeEnvironment } from "../utils/environment.js";
 export default class Errorlog {
   static table = "errorlogs";
 
-  static getFilterQuery(projectId, filters = {}) {
+  static getFilterQuery(projectId, filters = {}, tableAlias = "") {
     const { query, status, environment } = filters;
-    let whereSql = `WHERE project_id = ?`;
+    const prefix = tableAlias ? `${tableAlias}.` : "";
+    let whereSql = `WHERE ${prefix}project_id = ?`;
     const whereParams = [projectId];
 
     if (query) {
-      whereSql += ` AND (message LIKE ? OR id = ?)`;
+      whereSql += ` AND (${prefix}message LIKE ? OR ${prefix}id = ?)`;
       whereParams.push(`%${query}%`, `${query}`);
     }
 
     if (typeof status !== "undefined" && status !== "") {
-      whereSql += ` AND status = ?`;
-      whereParams.push(Number(status));
+      const statusValue = String(status);
+
+      if (statusValue === "open" || statusValue === "active") {
+        whereSql += ` AND ${prefix}status IN (?, ?)`;
+        whereParams.push(0, 1);
+      } else {
+        whereSql += ` AND ${prefix}status = ?`;
+        whereParams.push(Number(status));
+      }
     }
 
     if (environment) {
-      whereSql += ` AND environment = ?`;
+      whereSql += ` AND ${prefix}environment = ?`;
       whereParams.push(normalizeEnvironment(environment));
     }
 
@@ -135,15 +143,19 @@ export default class Errorlog {
       query,
       status,
       environment,
-    });
+    }, "e");
 
     const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
     const pageSize = Math.max(parseInt(limit, 10) || 10, 1);
     const offset = (pageNumber - 1) * pageSize;
     const sortOrder = String(orderBy).toUpperCase() === "ASC" ? "ASC" : "DESC";
 
-    const countSql = `SELECT COUNT(*) AS total FROM ${Errorlog.table} ${whereSql}`;
-    const sql = `SELECT * FROM ${Errorlog.table} ${whereSql} ORDER BY created_at ${sortOrder} LIMIT ? OFFSET ?`;
+    const countSql = `SELECT COUNT(*) AS total FROM ${Errorlog.table} e ${whereSql}`;
+    const sql = `SELECT e.*, u.username AS assignee_username, u.email AS assignee_email
+      FROM ${Errorlog.table} e
+      LEFT JOIN users u ON e.assignee_id = u.id
+      ${whereSql}
+      ORDER BY e.created_at ${sortOrder} LIMIT ? OFFSET ?`;
     const params = [...whereParams, pageSize, offset];
 
     return new Promise((resolve, reject) => {
@@ -181,7 +193,7 @@ export default class Errorlog {
       query,
       status,
       environment,
-    });
+    }, "e");
     const sortOrder = String(orderBy).toUpperCase() === "ASC" ? "ASC" : "DESC";
     const hasPagination =
       typeof page !== "undefined" &&
@@ -192,8 +204,16 @@ export default class Errorlog {
     const pageSize = Math.max(parseInt(limit, 10) || 10, 1);
     const offset = (pageNumber - 1) * pageSize;
     const sql = hasPagination
-      ? `SELECT * FROM ${Errorlog.table} ${whereSql} ORDER BY created_at ${sortOrder} LIMIT ? OFFSET ?`
-      : `SELECT * FROM ${Errorlog.table} ${whereSql} ORDER BY created_at ${sortOrder}`;
+      ? `SELECT e.*, u.username AS assignee_username, u.email AS assignee_email
+        FROM ${Errorlog.table} e
+        LEFT JOIN users u ON e.assignee_id = u.id
+        ${whereSql}
+        ORDER BY e.created_at ${sortOrder} LIMIT ? OFFSET ?`
+      : `SELECT e.*, u.username AS assignee_username, u.email AS assignee_email
+        FROM ${Errorlog.table} e
+        LEFT JOIN users u ON e.assignee_id = u.id
+        ${whereSql}
+        ORDER BY e.created_at ${sortOrder}`;
     const params = hasPagination
       ? [...whereParams, pageSize, offset]
       : whereParams;
@@ -211,7 +231,10 @@ export default class Errorlog {
   }
 
   static selectById(id) {
-    const sql = `SELECT * FROM ${Errorlog.table} WHERE id = ?`;
+    const sql = `SELECT e.*, u.username AS assignee_username, u.email AS assignee_email
+      FROM ${Errorlog.table} e
+      LEFT JOIN users u ON e.assignee_id = u.id
+      WHERE e.id = ?`;
 
     return new Promise((resolve, reject) => {
       con.query(sql, [id], (err, results) => {
@@ -259,15 +282,18 @@ export default class Errorlog {
 
   static assigned(filters = {}) {
     const userId = User.currentUser?.id;
-    const whereSql = [`assignee_id = ?`, `status = 1`];
+    const whereSql = [`e.assignee_id = ?`, `e.status = 1`];
     const params = [userId];
 
     if (filters?.environment) {
-      whereSql.push(`environment = ?`);
+      whereSql.push(`e.environment = ?`);
       params.push(normalizeEnvironment(filters.environment));
     }
 
-    const sql = `SELECT * FROM ${Errorlog.table} WHERE ${whereSql.join(" AND ")}`;
+    const sql = `SELECT e.*, u.username AS assignee_username, u.email AS assignee_email
+      FROM ${Errorlog.table} e
+      LEFT JOIN users u ON e.assignee_id = u.id
+      WHERE ${whereSql.join(" AND ")}`;
 
     return new Promise((resolve, reject) => {
       con.query(sql, params, (err, results) => {

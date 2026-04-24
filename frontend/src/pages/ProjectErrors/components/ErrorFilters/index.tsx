@@ -12,7 +12,7 @@ import { environmentOptions } from "types/environment";
 import { cssColor } from "utils/colors";
 
 export default function ErrorFilters() {
-  const { value, handleChange } = useFilterChange("status", 0);
+  const { value, handleChange } = useFilterChange("status", "active");
   const { value: environment, handleChange: handleEnvironmentChange } =
     useFilterChange("environment", "");
   const { handleChange: handlePageChange } = useFilterChange("page", 1);
@@ -65,7 +65,8 @@ export default function ErrorFilters() {
             label="Status"
             onChange={handleChangeStatus}
           >
-            <MenuItem value={0}>Unresolve</MenuItem>
+            <MenuItem value="active">Open</MenuItem>
+            <MenuItem value={0}>Unresolved</MenuItem>
             <MenuItem value={1}>Pending</MenuItem>
             <MenuItem value={2}>Resolved</MenuItem>
           </TextField>

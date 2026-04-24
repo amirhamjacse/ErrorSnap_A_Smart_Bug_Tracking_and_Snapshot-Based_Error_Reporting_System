@@ -33,7 +33,7 @@ export default function ProjectErrorsHeader({
 
     const queryParams = queryStringParse(location.search);
     const query = queryParams?.query || "";
-    const status = queryParams?.status ?? 0;
+    const status = queryParams?.status ?? "active";
     const environment = queryParams?.environment || "";
     const page = Number(queryParams?.page) > 0 ? Number(queryParams?.page) : 1;
     const limit =

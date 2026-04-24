@@ -167,7 +167,10 @@ Error details:
         cachedGeminiBase = apiBase;
         cachedGeminiModel = model;
 
-        const payload = parseJsonSafely(result.bodyText || "{}", "response body");
+        const payload = parseJsonSafely(
+          result.bodyText || "{}",
+          "response body",
+        );
         const contentText =
           payload?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
