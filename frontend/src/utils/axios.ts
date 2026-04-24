@@ -5,7 +5,8 @@ import Cookies from "js-cookie";
 export const apiClient = axios.create({
   // // @ts-expect-error
   // baseURL: import.meta.env.VITE_API_URL,
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: (import.meta as ImportMeta & { env?: { VITE_API_URL?: string } }).env
+    ?.VITE_API_URL,
   withCredentials: true,
 });
 

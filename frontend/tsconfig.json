@@ -6,7 +6,6 @@
     "module": "ESNext",
     "jsx": "preserve",
     "baseUrl": "./src",
-    "ignoreDeprecations": "6.0",
     "skipLibCheck": true,
     "lib": ["ES2015", "DOM"],
     "paths": {
