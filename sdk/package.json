@@ -10,6 +10,7 @@
   "author": "Asifur Rahaman",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "dotenv": "^16.4.5",
     "ts-loader": "^9.5.1",
     "typescript": "^5.6.3",

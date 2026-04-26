@@ -14,6 +14,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { queryStringParse } from "utils/querystring";
 import { apiClient } from "utils/axios";
 import toast from "react-hot-toast";
+import Copy from "components/Copy";
 
 export default function ProjectErrorsHeader({
   projectName,
@@ -93,6 +94,27 @@ export default function ProjectErrorsHeader({
           <Typography variant="h5" gutterBottom sx={{ mb: 0 }}>
             {projectName}
           </Typography>
+          {projectId ? (
+            <Copy
+              copyText={projectId}
+              fontSize={14}
+              sx={{
+                px: 1,
+                borderRadius: 5,
+                border: "1px solid",
+                borderColor: "divider",
+                backgroundColor: "background.paper",
+                gap: 0.25,
+                "& .MuiIconButton-root": {
+                  p: 0.4,
+                },
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                {projectId}
+              </Typography>
+            </Copy>
+          ) : null}
           <Link
             to={`/projects/${projectId}/settings/integration`}
             style={{ textDecoration: "none", display: "inline-flex" }}

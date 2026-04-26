@@ -97,9 +97,6 @@ router.post("/discord/connect", connectDiscordIntegration);
 router.post("/discord/disconnect", removeDiscordIntegration);
 router.get("/audit-logs/:projectId", getProjectAuditLogs);
 
-// Keep session tracking enabled for SDK compatibility.
-router.post("/usage/session-start", recordSessionStart);
-
 router.get("/public/status/:projectId", getPublicProjectStatus);
 router.get("/ai/analysis/:errorId", getErrorAnalysis);
 

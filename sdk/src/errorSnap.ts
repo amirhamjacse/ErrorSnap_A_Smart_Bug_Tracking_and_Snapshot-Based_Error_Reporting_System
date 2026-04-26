@@ -2,14 +2,11 @@ import { toPng } from "html-to-image";
 
 interface config {
   projectId: string;
-  apiKey?: string;
-  environment?: "development" | "staging" | "production";
 }
 
 interface errorData {
   type: string;
   projectId?: string;
-  apiKey?: string;
   message: string | Event;
   source?: string;
   lineno?: number | undefined;
@@ -19,24 +16,15 @@ interface errorData {
   environment?: string;
 }
 
-const ALLOWED_ENVIRONMENTS = ["development", "staging", "production"];
-
 export default class ErrorSnap {
   projectId: string;
-  apiKey?: string;
-  environment: string;
-  sessionId: string;
 
   constructor(config: config) {
     this.projectId = config.projectId;
-    this.apiKey = config.apiKey;
-    this.environment = this.normalizeEnvironment(config.environment);
-    this.sessionId = this.generateSessionId();
   }
 
   initialize() {
     console.log("Initilized ErrorSnap with project id:", this.projectId);
-    this.trackSessionStart();
     this.initErrorHandling();
   }
 
@@ -69,14 +57,11 @@ export default class ErrorSnap {
       browser,
       os,
       projectId: this.projectId,
-      apiKey: this.apiKey,
-      sessionId: this.sessionId,
-      environment: this.environment,
       timestamp: new Date().toISOString(),
     };
 
     const targetElement = document.body;
-    let imageData = null;
+    let imageData: string | null = null;
     toPng(targetElement)
       .then((url) => {
         imageData = url;
@@ -97,17 +82,19 @@ export default class ErrorSnap {
 
   getBrowserInfo() {
     if ((navigator as any)?.userAgentData) {
-      const mainBrand = (navigator as any)?.userAgentData?.brands.find(
+      const brands = (navigator as any)?.userAgentData?.brands || [];
+      // Filter out generic placeholders and find the actual browser brand
+      const mainBrand = brands.find(
         (brand) =>
-          brand.brand.includes("Chrome") ||
-          brand.brand.includes("Firefox") ||
-          brand.brand.includes("Safari") ||
-          brand.brand.includes("Edge")
+          brand.brand &&
+          !brand.brand.includes("Not A Brand") &&
+          !brand.brand.includes("Chromium") &&
+          brand.brand.trim().length > 0,
       );
 
       return mainBrand
         ? `${mainBrand.brand} ${mainBrand.version}`
-        : "Unknown Browser";
+        : this.parseUserAgentForBrowser();
     } else {
       return this.parseUserAgentForBrowser();
     }
@@ -126,20 +113,8 @@ export default class ErrorSnap {
     let browserName = "Unknown Browser";
     let fullVersion = "";
 
-    if (
-      userAgent.includes("Chrome") &&
-      !userAgent.includes("Edge") &&
-      !userAgent.includes("OPR")
-    ) {
-      browserName = "Chrome";
-      fullVersion = userAgent.match(/Chrome\/([\d.]+)/)?.[1] || "";
-    } else if (userAgent.includes("Firefox")) {
-      browserName = "Firefox";
-      fullVersion = userAgent.match(/Firefox\/([\d.]+)/)?.[1] || "";
-    } else if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
-      browserName = "Safari";
-      fullVersion = userAgent.match(/Version\/([\d.]+)/)?.[1] || "";
-    } else if (userAgent.includes("Edge")) {
+    // Check for specific browsers in order of specificity to avoid false matches
+    if (userAgent.includes("Edg/")) {
       browserName = "Edge";
       fullVersion = userAgent.match(/Edg\/([\d.]+)/)?.[1] || "";
     } else if (userAgent.includes("OPR") || userAgent.includes("Opera")) {
@@ -148,9 +123,30 @@ export default class ErrorSnap {
         userAgent.match(/OPR\/([\d.]+)/)?.[1] ||
         userAgent.match(/Opera\/([\d.]+)/)?.[1] ||
         "";
+    } else if (userAgent.includes("Brave")) {
+      browserName = "Brave";
+      fullVersion = userAgent.match(/Brave\/([\d.]+)/)?.[1] || "";
+    } else if (userAgent.includes("Vivaldi")) {
+      browserName = "Vivaldi";
+      fullVersion = userAgent.match(/Vivaldi\/([\d.]+)/)?.[1] || "";
+    } else if (userAgent.includes("Arc")) {
+      browserName = "Arc";
+      fullVersion = userAgent.match(/Arc\/([\d.]+)/)?.[1] || "";
+    } else if (userAgent.includes("SamsungBrowser")) {
+      browserName = "Samsung Internet";
+      fullVersion = userAgent.match(/SamsungBrowser\/([\d.]+)/)?.[1] || "";
+    } else if (userAgent.includes("Chrome")) {
+      browserName = "Chrome";
+      fullVersion = userAgent.match(/Chrome\/([\d.]+)/)?.[1] || "";
+    } else if (userAgent.includes("Firefox")) {
+      browserName = "Firefox";
+      fullVersion = userAgent.match(/Firefox\/([\d.]+)/)?.[1] || "";
+    } else if (userAgent.includes("Safari")) {
+      browserName = "Safari";
+      fullVersion = userAgent.match(/Version\/([\d.]+)/)?.[1] || "";
     }
 
-    return `${browserName} ${fullVersion}`;
+    return `${browserName} ${fullVersion}`.trim();
   }
 
   parseUserAgentForOS() {
@@ -162,65 +158,5 @@ export default class ErrorSnap {
     if (userAgent.includes("iPhone") || userAgent.includes("iPad"))
       return "iOS";
     return "Unknown OS";
-  }
-
-  normalizeEnvironment(value?: string) {
-    if (!value) {
-      return "production";
-    }
-
-    const normalized = value.trim().toLowerCase();
-    if (!ALLOWED_ENVIRONMENTS.includes(normalized)) {
-      return "production";
-    }
-
-    return normalized;
-  }
-
-  generateSessionId() {
-    return `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-  }
-
-  getSessionStartUrl() {
-    const errorLogsUrl = process.env.ERROR_LOGS_API_URL;
-    if (!errorLogsUrl) {
-      return "";
-    }
-
-    if (/\/error-logs\/?$/.test(errorLogsUrl)) {
-      return errorLogsUrl.replace(/\/error-logs\/?$/, "/usage/session-start");
-    }
-
-    if (errorLogsUrl.startsWith("/")) {
-      return "/usage/session-start";
-    }
-
-    try {
-      const parsedUrl = new URL(errorLogsUrl);
-      return `${parsedUrl.origin}/usage/session-start`;
-    } catch {
-      return "";
-    }
-  }
-
-  trackSessionStart() {
-    const sessionStartUrl = this.getSessionStartUrl();
-    if (!sessionStartUrl) {
-      return;
-    }
-
-    fetch(sessionStartUrl, {
-      method: "POST",
-      body: JSON.stringify({
-        projectId: this.projectId,
-        apiKey: this.apiKey,
-        sessionId: this.sessionId,
-        environment: this.environment,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      keepalive: true,
-    }).catch((err) => console.error("Failed to track session:", err));
   }
 }
