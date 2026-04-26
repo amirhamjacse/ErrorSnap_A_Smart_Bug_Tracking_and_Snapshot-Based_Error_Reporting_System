@@ -1,9 +1,19 @@
-import { Badge, Divider, ListItemIcon, Menu, MenuItem } from "@mui/material";
+import {
+  Avatar,
+  Badge,
+  Box,
+  Divider,
+  ListItemIcon,
+  Menu,
+  MenuItem,
+  Typography,
+} from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import LogoutIcon from "icons/LogoutIcon";
 import React from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import useAuthUser from "hooks/useAuthUser";
 import { removeUser } from "store/features/auth";
 import { zeroArgsFunction } from "types/function";
 import { cssColor } from "utils/colors";
@@ -19,6 +29,7 @@ export default function MenuItemsPopup({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { user } = useAuthUser();
   const open = Boolean(anchorEl);
 
   const handleLogout = () => {
@@ -44,6 +55,7 @@ export default function MenuItemsPopup({
               overflow: "visible",
               filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
               mt: 1.5,
+              minWidth: 240,
 
               "&::before": {
                 content: '""',
@@ -65,6 +77,35 @@ export default function MenuItemsPopup({
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
+        <Box
+          sx={{
+            px: 2,
+            py: 1.75,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.25,
+            borderBottom: `1px solid ${cssColor("divider")}`,
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 38,
+              height: 38,
+              fontSize: 15,
+              fontWeight: 700,
+              backgroundColor: "primary.main",
+            }}
+          >
+            {user?.username?.[0]?.toUpperCase() ||
+              user?.email?.[0]?.toUpperCase() ||
+              "U"}
+          </Avatar>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>
+              {user?.email || "No email available"}
+            </Typography>
+          </Box>
+        </Box>
         <Link to="/assigned-errors">
           <MenuItem onClick={onClose}>Assigned Errors</MenuItem>
         </Link>
