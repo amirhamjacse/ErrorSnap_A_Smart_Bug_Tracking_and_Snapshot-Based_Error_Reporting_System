@@ -9,9 +9,9 @@ import AuditLog from "../auditLogs/auditLog.js";
 function toMySqlDateTime(date) {
   const pad = (value) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate()
+    date.getDate(),
   )} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
-    date.getSeconds()
+    date.getSeconds(),
   )}`;
 }
 
@@ -44,7 +44,7 @@ export const sendTeamInvitation = async (req, res) => {
     // check for duplicate team member
     const duplicate = await ProjectTeam.checkForDuplicateTeamMember(
       projectId,
-      user?.id
+      user?.id,
     );
     if (duplicate) {
       return res
@@ -91,7 +91,7 @@ export const sendTeamInvitation = async (req, res) => {
 
   const existingLink = await ProjectInvitationLink.getActiveByProjectAndEmail(
     projectId,
-    normalizedEmail
+    normalizedEmail,
   );
   if (existingLink?.id) {
     return res.status(400).json({
@@ -102,9 +102,9 @@ export const sendTeamInvitation = async (req, res) => {
 
   const token = randomBytes(32).toString("hex");
   const expiresAt = toMySqlDateTime(new Date(Date.now() + 10 * 60 * 1000));
-  const frontendUrl = process.env.FRONTEND_URL || "http://127.0.0.1:3001";
+  const frontendUrl = process.env.FRONTEND_LINK || "http://127.0.0.1:3001";
   const registerLink = `${frontendUrl}/register?invitationToken=${token}&email=${encodeURIComponent(
-    normalizedEmail
+    normalizedEmail,
   )}`;
 
   try {
@@ -199,9 +199,8 @@ export const getPendingMembers = async (req, res) => {
 
   try {
     const pendingMembers = await ProjectTeam.members(projectId, true);
-    const pendingLinks = await ProjectInvitationLink.pendingForProject(
-      projectId
-    );
+    const pendingLinks =
+      await ProjectInvitationLink.pendingForProject(projectId);
 
     const pendingTeamMembers = (pendingMembers || []).map((item) => ({
       ...item,
