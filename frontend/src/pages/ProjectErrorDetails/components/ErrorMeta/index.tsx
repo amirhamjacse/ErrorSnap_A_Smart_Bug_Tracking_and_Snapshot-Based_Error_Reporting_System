@@ -84,10 +84,10 @@ export default function ErrorMeta({ error, loading, update }: ErrorMetaProps) {
           loading={loading}
           resolved={error?.status === errorLogStatus.RESOLVED}
           update={update}
-          assigneeId={error?.assignee_id}
+          assignee={error?.assignee}
         />
 
-        {error?.assignee_id ? (
+        {error?.assignee ? (
           <Button
             onClick={handleResolveError}
             sx={{ mt: 2 }}

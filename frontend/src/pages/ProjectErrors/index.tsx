@@ -45,7 +45,7 @@ export default function ProjectErrors() {
             <Grid size={12}>
               <ProjectErrorsHeader
                 projectName={project?.name as string}
-                onOpenFilteredExport={() => setExportDialogOpen(true)}
+                onOpenExport={() => setExportDialogOpen(true)}
               />
             </Grid>
 

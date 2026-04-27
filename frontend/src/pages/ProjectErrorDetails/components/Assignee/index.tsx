@@ -4,24 +4,25 @@ import useProjectTeamList from "hooks/useProjectTeamList";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
+import { errorAssignee } from "types/errorLog";
 import { zeroArgsFunction } from "types/function";
 import { teamMember } from "types/team";
 import { apiClient } from "utils/axios";
 
 type postAssignMember = {
-  userId: number;
+  userId: number | null;
   errorId: string;
 };
 
 type AssigneeProps = {
-  assigneeId: number;
+  assignee: errorAssignee | null;
   loading: boolean;
   resolved: boolean;
   update: zeroArgsFunction;
 };
 
 export default function Assignee({
-  assigneeId,
+  assignee,
   loading,
   resolved,
   update,
@@ -38,9 +39,13 @@ export default function Assignee({
     refetchOnWindowFocus: false,
   });
 
-  const assigneeUser = data?.find((team) => team.user_id === assigneeId);
+  const assigneeUser = data?.find(
+    (team) =>
+      team.user_id === assignee?.id ||
+      (assignee?.username && team.username === assignee.username),
+  );
 
-  const handleChangeAssignee = (_event, selectedItem: teamMember) => {
+  const handleChangeAssignee = (_event, selectedItem: teamMember | null) => {
     const data = {
       userId: selectedItem?.user_id || null,
       errorId: errorId,

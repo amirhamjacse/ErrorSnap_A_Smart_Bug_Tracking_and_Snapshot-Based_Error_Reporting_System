@@ -15,7 +15,6 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Alert,
   CircularProgress,
   Table,
   TableBody,
@@ -66,13 +65,12 @@ export default function ExportDialog({
   const [format, setFormat] = useState<"csv" | "json">("csv");
   const [filters, setFilters] = useState<ExportFilters>({});
   const [preview, setPreview] = useState<ExportPreview | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
 
   const { mutateAsync: getPreview, isPending: previewLoading } = useMutation({
     mutationFn: async () => {
       const response = await apiClient.post(
         `/export/${projectId}/preview`,
-        filters
+        filters,
       );
       return response.data?.data as ExportPreview;
     },
@@ -94,7 +92,7 @@ export default function ExportDialog({
 
   const handleFilterChange = (
     key: keyof ExportFilters,
-    value: string | number
+    value: string | number,
   ) => {
     setFilters((prev) => ({
       ...prev,
@@ -106,7 +104,6 @@ export default function ExportDialog({
     try {
       const result = await getPreview();
       setPreview(result);
-      setShowPreview(true);
     } catch (error) {
       console.error("Failed to generate preview", error);
     }
@@ -188,7 +185,9 @@ export default function ExportDialog({
                   label="End Date"
                   InputLabelProps={{ shrink: true }}
                   value={filters.endDate || ""}
-                  onChange={(e) => handleFilterChange("endDate", e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("endDate", e.target.value)
+                  }
                   fullWidth
                 />
               </Stack>
@@ -262,7 +261,7 @@ export default function ExportDialog({
             <Button
               variant="outlined"
               onClick={handlePreview}
-              disabled={previewLoading || showPreview}
+              disabled={previewLoading}
               fullWidth
             >
               {previewLoading ? (
@@ -275,16 +274,8 @@ export default function ExportDialog({
               )}
             </Button>
 
-            {showPreview && preview && (
+            {preview && (
               <Box sx={{ mt: 2 }}>
-                <Alert severity="info">
-                  <Typography variant="body2">
-                    <strong>{preview.filteredErrors}</strong> of{" "}
-                    <strong>{preview.totalErrors}</strong> errors match your
-                    filters.
-                  </Typography>
-                </Alert>
-
                 {preview.filteredErrors > 0 && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="caption" sx={{ fontWeight: 600 }}>
@@ -293,7 +284,7 @@ export default function ExportDialog({
                     <TableContainer component={Paper} sx={{ mt: 1 }}>
                       <Table size="small">
                         <TableHead>
-                          <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
+                          <TableRow sx={{ backgroundColor: "#202020" }}>
                             <TableCell>Message</TableCell>
                             <TableCell>Browser</TableCell>
                             <TableCell>Status</TableCell>

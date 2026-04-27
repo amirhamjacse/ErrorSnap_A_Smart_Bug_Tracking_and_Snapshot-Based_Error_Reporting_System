@@ -1,3 +1,9 @@
+export type errorAssignee = {
+  id: number | null;
+  username?: string | null;
+  email?: string | null;
+};
+
 export type errorLog = {
   id: string;
   message: string;
@@ -11,9 +17,7 @@ export type errorLog = {
   environment: string;
   status: errorLogStatus;
   created_at: string;
-  assignee_id: number;
-  assignee_username?: string | null;
-  assignee_email?: string | null;
+  assignee: errorAssignee | null;
   image: string;
 };
 

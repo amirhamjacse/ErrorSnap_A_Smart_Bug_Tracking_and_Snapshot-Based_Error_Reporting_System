@@ -130,10 +130,7 @@ export default function ErrorTable() {
                 </TableCell>
                 <TableCell>{getTimeAgo(error?.created_at)}</TableCell>
                 <TableCell>
-                  {error?.assignee_username ||
-                    error?.assignee_email ||
-                    error?.assignee_id ||
-                    "-"}
+                  {error?.assignee?.username || error?.assignee?.email || "-"}
                 </TableCell>
               </TableRow>
             ))}

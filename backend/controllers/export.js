@@ -17,7 +17,7 @@ function formatCsvRow(error) {
     error.environment || "production",
     getStatusLabel(error.status),
     new Date(error.created_at).toLocaleString(),
-    error.assignee_id ? `Assigned` : "Unassigned",
+    error.assignee ? `Assigned` : "Unassigned",
   ].join(",");
 }
 
@@ -74,7 +74,7 @@ function generateJson(errors) {
     environment: error.environment,
     status: getStatusLabel(error.status),
     createdAt: new Date(error.created_at).toISOString(),
-    assignment: error.assignee_id ? "Assigned" : "Unassigned",
+    assignment: error.assignee ? "Assigned" : "Unassigned",
     stackTrace: error.stack,
   }));
 
@@ -85,52 +85,56 @@ function generateJson(errors) {
  * Apply filters to errors
  */
 function applyFilters(errors, filters) {
+  const safeFilters = filters || {};
+
   return errors.filter((error) => {
     // Date range filter
-    if (filters.startDate) {
+    if (safeFilters.startDate) {
       const errorDate = new Date(error.created_at);
-      const startDate = new Date(filters.startDate);
+      const startDate = new Date(safeFilters.startDate);
       if (errorDate < startDate) return false;
     }
 
-    if (filters.endDate) {
+    if (safeFilters.endDate) {
       const errorDate = new Date(error.created_at);
-      const endDate = new Date(filters.endDate);
+      const endDate = new Date(safeFilters.endDate);
       endDate.setHours(23, 59, 59, 999);
       if (errorDate > endDate) return false;
     }
 
     // Status filter
-    if (filters.status !== undefined && filters.status !== "") {
-      if (error.status !== parseInt(filters.status)) return false;
+    if (safeFilters.status !== undefined && safeFilters.status !== "") {
+      if (error.status !== parseInt(safeFilters.status)) return false;
     }
 
     // Browser filter
-    if (filters.browser && error.browser) {
-      if (!error.browser.toLowerCase().includes(filters.browser.toLowerCase()))
+    if (safeFilters.browser && error.browser) {
+      if (
+        !error.browser.toLowerCase().includes(safeFilters.browser.toLowerCase())
+      )
         return false;
     }
 
     // OS filter
-    if (filters.os && error.os) {
-      if (!error.os.toLowerCase().includes(filters.os.toLowerCase()))
+    if (safeFilters.os && error.os) {
+      if (!error.os.toLowerCase().includes(safeFilters.os.toLowerCase()))
         return false;
     }
 
     // Environment filter
-    if (filters.environment && error.environment) {
+    if (safeFilters.environment && error.environment) {
       if (
         !error.environment
           .toLowerCase()
-          .includes(filters.environment.toLowerCase())
+          .includes(safeFilters.environment.toLowerCase())
       )
         return false;
     }
 
     // Message/search filter
-    if (filters.search && error.message) {
+    if (safeFilters.search && error.message) {
       if (
-        !error.message.toLowerCase().includes(filters.search.toLowerCase())
+        !error.message.toLowerCase().includes(safeFilters.search.toLowerCase())
       )
         return false;
     }
@@ -145,8 +149,8 @@ function applyFilters(errors, filters) {
 export async function exportErrorsCsv(req, res) {
   try {
     const { projectId } = req.params;
-    const userId = req.user?.id;
-    const filters = req.body;
+    const userId = req.errorsnapUser?.id;
+    const filters = req.body || {};
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -155,14 +159,17 @@ export async function exportErrorsCsv(req, res) {
     // Verify user has access to this project
     const teamMember = await ProjectTeam.selectByProjectIdUserId(
       projectId,
-      userId
+      userId,
     );
     if (!teamMember) {
       return res.status(403).json({ error: "Access denied to this project" });
     }
 
     // Fetch all errors for the project
-    const errors = await Errorlog.selectByProjectId(projectId);
+    const errorsResult = await Errorlog.selectByProjectId(projectId);
+    const errors = Array.isArray(errorsResult)
+      ? errorsResult
+      : errorsResult?.rows || [];
 
     // Apply filters
     const filteredErrors = applyFilters(errors, filters);
@@ -174,7 +181,7 @@ export async function exportErrorsCsv(req, res) {
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="errors_${projectId}_${new Date().getTime()}.csv"`
+      `attachment; filename="errors_${projectId}_${new Date().getTime()}.csv"`,
     );
 
     return res.status(200).send(csvContent);
@@ -193,8 +200,8 @@ export async function exportErrorsCsv(req, res) {
 export async function exportErrorsJson(req, res) {
   try {
     const { projectId } = req.params;
-    const userId = req.user?.id;
-    const filters = req.body;
+    const userId = req.errorsnapUser?.id;
+    const filters = req.body || {};
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -203,14 +210,17 @@ export async function exportErrorsJson(req, res) {
     // Verify user has access to this project
     const teamMember = await ProjectTeam.selectByProjectIdUserId(
       projectId,
-      userId
+      userId,
     );
     if (!teamMember) {
       return res.status(403).json({ error: "Access denied to this project" });
     }
 
     // Fetch all errors for the project
-    const errors = await Errorlog.selectByProjectId(projectId);
+    const errorsResult = await Errorlog.selectByProjectId(projectId);
+    const errors = Array.isArray(errorsResult)
+      ? errorsResult
+      : errorsResult?.rows || [];
 
     // Apply filters
     const filteredErrors = applyFilters(errors, filters);
@@ -222,7 +232,7 @@ export async function exportErrorsJson(req, res) {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="errors_${projectId}_${new Date().getTime()}.json"`
+      `attachment; filename="errors_${projectId}_${new Date().getTime()}.json"`,
     );
 
     return res.status(200).send(jsonContent);
@@ -241,8 +251,8 @@ export async function exportErrorsJson(req, res) {
 export async function getExportPreview(req, res) {
   try {
     const { projectId } = req.params;
-    const userId = req.user?.id;
-    const filters = req.body;
+    const userId = req.errorsnapUser?.id;
+    const filters = req.body || {};
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -251,14 +261,17 @@ export async function getExportPreview(req, res) {
     // Verify user has access to this project
     const teamMember = await ProjectTeam.selectByProjectIdUserId(
       projectId,
-      userId
+      userId,
     );
     if (!teamMember) {
       return res.status(403).json({ error: "Access denied to this project" });
     }
 
     // Fetch all errors for the project
-    const errors = await Errorlog.selectByProjectId(projectId);
+    const errorsResult = await Errorlog.selectByProjectId(projectId);
+    const errors = Array.isArray(errorsResult)
+      ? errorsResult
+      : errorsResult?.rows || [];
 
     // Apply filters
     const filteredErrors = applyFilters(errors, filters);

@@ -7,6 +7,28 @@ import { normalizeEnvironment } from "../utils/environment.js";
 export default class Errorlog {
   static table = "errorlogs";
 
+  static formatAssignee(error) {
+    if (!error) {
+      return error;
+    }
+
+    const { assignee_id, assignee_username, assignee_email, ...rest } = error;
+
+    const hasAssignee =
+      assignee_id || assignee_username || assignee_email;
+
+    return {
+      ...rest,
+      assignee: hasAssignee
+        ? {
+            id: assignee_id ?? null,
+            username: assignee_username ?? null,
+            email: assignee_email ?? null,
+          }
+        : null,
+    };
+  }
+
   static getFilterQuery(projectId, filters = {}, tableAlias = "") {
     const { query, status, environment } = filters;
     const prefix = tableAlias ? `${tableAlias}.` : "";
@@ -174,7 +196,7 @@ export default class Errorlog {
           }
 
           resolve({
-            rows: results,
+            rows: results.map((error) => Errorlog.formatAssignee(error)),
             pagination: {
               total,
               page: pageNumber,
@@ -243,7 +265,7 @@ export default class Errorlog {
           return reject(err);
         }
 
-        resolve(results[0]);
+        resolve(Errorlog.formatAssignee(results[0]));
       });
     });
   }
@@ -302,7 +324,7 @@ export default class Errorlog {
           return reject(err);
         }
 
-        resolve(results);
+        resolve(results.map((error) => Errorlog.formatAssignee(error)));
       });
     });
   }

@@ -37,7 +37,7 @@ The system is designed for production observability workflows, especially for te
 - AI-powered fix suggestions with code snippets and implementation steps.
 - Error export to CSV and JSON formats with advanced filtering.
 - Export preview before download to verify filtered results.
-- Project Errors quick actions: Integration Guide, Filtered Export, Export Logs, and Settings.
+- Project Errors quick actions: Integration Guide, Export, and Settings.
 - Project card quick-access Integration button.
 - Dashboard views for projects, project errors, assigned errors, invitations, and settings.
 
@@ -126,7 +126,6 @@ The backend boots through `backend/app.js`, loads environment variables, applies
 - Error logs
   - `POST /error-logs`
   - `GET /error-logs/:projectId`
-  - `GET /error-logs/:projectId/export`
   - `GET /errors/:errorId`
   - `POST /assign-error`
   - `POST /resolve-error`

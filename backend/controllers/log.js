@@ -167,78 +167,6 @@ export const getProjectErrors = async (req, res) => {
   }
 };
 
-const csvEscape = (value) => {
-  const plainValue = value === null || typeof value === "undefined" ? "" : String(value);
-  const escaped = plainValue.replace(/"/g, '""');
-  return `"${escaped}"`;
-};
-
-const errorStatusLabel = {
-  0: "Unresolved",
-  1: "Pending",
-  2: "Resolved",
-};
-
-export const exportProjectErrorsCsv = async (req, res) => {
-  const { projectId } = req.params;
-
-  if (!projectId) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
-  try {
-    const isProjectMember = await ProjectTeam.isProjectMember(projectId);
-    if (!isProjectMember.length) {
-      return res.status(404).json({ message: "Project not found!" });
-    }
-
-    const rows = await Errorlog.selectByProjectIdForExport(projectId, req.query);
-    const header = [
-      "id",
-      "message",
-      "project_id",
-      "source",
-      "lineno",
-      "colno",
-      "os",
-      "environment",
-      "browser",
-      "status",
-      "assignee_id",
-      "created_at",
-    ];
-
-    const bodyRows = rows.map((row) =>
-      [
-        row.id,
-        row.message,
-        row.project_id,
-        row.source,
-        row.lineno,
-        row.colno,
-        row.os,
-        row.environment,
-        row.browser,
-        errorStatusLabel[row.status] || "Unknown",
-        row.assignee_id,
-        row.created_at,
-      ]
-        .map(csvEscape)
-        .join(",")
-    );
-
-    const csv = [header.map(csvEscape).join(","), ...bodyRows].join("\n");
-    const fileName = `errors-${projectId}-${Date.now()}.csv`;
-
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename=\"${fileName}\"`);
-    return res.status(200).send(csv);
-  } catch (error) {
-    console.error("Error exporting error logs:", error);
-    return res.status(500).json({ message: "Error exporting error logs" });
-  }
-};
-
 export const getError = async (req, res) => {
   const { errorId } = req.params;
 
@@ -273,6 +201,7 @@ export const assignUserToError = async (req, res) => {
   try {
     const errorLog = await Errorlog.selectById(errorId);
     await Errorlog.assignUser(userId, errorId);
+    const updatedErrorLog = await Errorlog.selectById(errorId);
 
     void AuditLog.record({
       projectId: errorLog?.project_id,
@@ -283,7 +212,7 @@ export const assignUserToError = async (req, res) => {
       entityId: errorId,
       summary: `Error ${errorId} was assigned`,
       metadata: {
-        assigneeId: userId,
+        assignee: updatedErrorLog?.assignee?.username || null,
       },
     }).catch((error) => console.error("Audit log insert failed:", error));
 

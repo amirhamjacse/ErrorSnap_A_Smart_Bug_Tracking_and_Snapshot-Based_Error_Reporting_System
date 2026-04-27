@@ -5,7 +5,6 @@ import ErrorsnapDb from "../classes/errorsnapdb.js";
 import Project from "../classes/project.js";
 import ProjectTeam from "../classes/projectTeam.js";
 import Errorlog from "../classes/errorlog.js";
-import AuditLog from "../auditLogs/auditLog.js";
 
 export const addProject = async (req, res) => {
   const user_id = req.errorsnapUser?.id;
@@ -37,17 +36,6 @@ export const addProject = async (req, res) => {
         project_id: id,
         user_id,
       });
-
-      void AuditLog.record({
-        projectId: id,
-        actorId: user_id,
-        actorName: req.errorsnapUser?.username || "System",
-        action: "project.created",
-        entityType: "project",
-        entityId: id,
-        summary: `Project ${name} was created`,
-        metadata: { name, description },
-      }).catch((error) => console.error("Audit log insert failed:", error));
 
       if (projectTeamInserted) {
         res.status(201).json({ message: "Project added successfully" });
