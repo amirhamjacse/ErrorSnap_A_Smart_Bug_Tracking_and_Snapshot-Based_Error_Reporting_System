@@ -92,7 +92,7 @@ function deleteProjectSourceMaps(project) {
   const sourceMapsPath = path.join(
     "source-maps",
     String(project?.user_id),
-    String(project?.id)
+    String(project?.id),
   );
 
   if (fs.existsSync(sourceMapsPath)) {
@@ -119,20 +119,11 @@ export const deleteProject = async (req, res) => {
     await ProjectTeam.deleteTeam(projectId);
 
     // delete source maps
-    deleteProjectSourceMaps(project[0]);
-
-    void AuditLog.record({
-      projectId,
-      actorId: req.errorsnapUser?.id,
-      actorName: req.errorsnapUser?.username || "System",
-      action: "project.deleted",
-      entityType: "project",
-      entityId: projectId,
-      summary: `Project ${project[0]?.name || projectId} was deleted`,
-      metadata: {
-        projectName: project[0]?.name,
-      },
-    }).catch((error) => console.error("Audit log insert failed:", error));
+    try {
+      deleteProjectSourceMaps(project[0]);
+    } catch (sourceMapError) {
+      console.error("Failed to delete source maps:", sourceMapError);
+    }
 
     res.status(201).json({ message: "Project deleted successfully" });
   } catch (error) {
